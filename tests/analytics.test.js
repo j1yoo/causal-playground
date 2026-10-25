@@ -79,6 +79,11 @@ test('marks still work when the browser blocks storage', () => {
   }
 });
 
+test('the address bar keeps the cross-domain linker value, so a visit from the lab site stays one visitor', () => {
+  assert.equal(A.addressSearch('?_gl=1*abc*_ga*MTIz&via=e1'), '?_gl=1*abc*_ga*MTIz');
+  assert.equal(A.pageLocation('https://j1yoo.github.io/causal-playground/?_gl=1*abc'), 'https://j1yoo.github.io/causal-playground/');
+});
+
 test('the address bar keeps only campaign tags and cp_debug', () => {
   assert.equal(A.addressSearch('?via=e1'), '');
   assert.equal(A.addressSearch('?cp_debug=1&via=e1&site_role=owner&sid=s112&email=a%40b.c'), '?cp_debug=1');

@@ -153,7 +153,8 @@ A page test renders every formula with KaTeX and fails on invalid TeX.
 
 - One page load sends at most 300 of these events. Values are cut to 100 characters.
 - Text typed into an address must never reach Google. Before Google Analytics starts, the address bar keeps
-  only campaign tags (`utm_*`) and `cp_debug`. `page_location` is the origin, the path, and the campaign tags,
+  only campaign tags (`utm_*`), `cp_debug`, and `_gl` (the cross-domain linker value between j1yoo.github.io and
+  cadi-lab.github.io, which the config also lists). `page_location` is the origin, the path, and the campaign tags,
   without a fragment. `page_referrer` is the referrer without its query and fragment.
 - Two marks in the address become user properties after a check:
   - `?via=<code>`: a group code on a link from a course page. A code is one or two lower-case letters and one

@@ -203,7 +203,7 @@ await part('live', async () => {
   check('live: no request outside the site and gtag.js', tab.blocked.length === 0, tab.blocked.join(' '));
   check('live: js, user properties, then config with the cleaned address', dl.length >= 3 && dl[0][0] === 'js'
     && same(dl[1], ['set', 'user_properties', { cp_audience: 'q9' }])
-    && same(dl[2], ['config', 'G-F2Y4X86JTT', { page_location: LIVE + 'did.html', content_group: 'causal-playground', cookie_domain: 'auto', cookie_flags: 'SameSite=None;Secure' }]),
+    && same(dl[2], ['config', 'G-F2Y4X86JTT', { page_location: LIVE + 'did.html', content_group: 'causal-playground', cookie_domain: 'auto', cookie_flags: 'SameSite=None;Secure', linker: { domains: ['j1yoo.github.io', 'cadi-lab.github.io'] } }]),
   JSON.stringify(dl.slice(0, 3)));
   const change = dl.filter(e => e[0] === 'event' && e[1] === 'cp_control_change');
   check('live: a slider release becomes a gtag event', change.length === 1 && change[0][2].cp_module === 'did', JSON.stringify(change));

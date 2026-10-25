@@ -2,7 +2,8 @@
 // It runs only on the published host. On any other host the page records nothing.
 // With ?cp_debug=1 in the address, the page prints each record with console.debug and sends nothing.
 // The records never include names, email addresses, or student numbers.
-// Before Google Analytics starts, the address bar keeps only campaign tags (utm_*) and cp_debug, and the
+// Before Google Analytics starts, the address bar keeps only campaign tags (utm_*), cp_debug, and the
+// cross-domain linker value (_gl), and the
 // records get the page address with campaign tags only and a referrer without its query. So text typed
 // into an address never reaches Google. Two marks in the address become user properties after a check:
 //   ?site_role=owner marks this browser as the site owner's, and ?site_role=clear removes the mark.
@@ -67,9 +68,10 @@
 
   const isCampaignTag = key => /^utm_[a-z_]+$/.test(key);
 
-  // The query that stays in the address bar.
+  // The query that stays in the address bar. _gl is the value that Google Analytics adds to links between
+  // j1yoo.github.io and cadi-lab.github.io, so that a visitor stays one visitor across both sites.
   function addressSearch(search) {
-    return keepParams(search, key => isCampaignTag(key) || key === 'cp_debug');
+    return keepParams(search, key => isCampaignTag(key) || key === 'cp_debug' || key === '_gl');
   }
 
   // The page address that the records get: no marks, no other parameters, no fragment.
@@ -125,7 +127,8 @@
       // get typed text in its referrer.
       history.replaceState(history.state, '', location.pathname + search + location.hash);
     }
-    const config = { page_location: pageLocation(location.href), content_group: 'causal-playground', cookie_domain: 'auto', cookie_flags: 'SameSite=None;Secure' };
+    const config = { page_location: pageLocation(location.href), content_group: 'causal-playground', cookie_domain: 'auto', cookie_flags: 'SameSite=None;Secure',
+      linker: { domains: ['j1yoo.github.io', 'cadi-lab.github.io'] } };
     const referrer = cleanReferrer(document.referrer);
     if (referrer) config.page_referrer = referrer;
     let deliver;
