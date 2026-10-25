@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Regression adjustment and good and bad controls | Causal Playground</title>
+<meta name="description" content="Interactive simulation: regression adjustment in an observational study, the weights of a regression with one treatment coefficient, extrapolation, and good and bad controls in causal diagrams.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/vendor/katex/katex.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+  /* Page styles that style.css does not have. */
+  .dag-wrap { max-width: 380px; margin: 4px 0 8px; }
+  svg.dag { display: block; width: 100%; height: auto; }
+  svg.dag circle { fill: var(--surface); stroke: var(--ink-2); stroke-width: 1.5; }
+  svg.dag circle.z { stroke: var(--series-1); stroke-width: 2.5; }
+  svg.dag circle.hidden { stroke-dasharray: 4 3; }
+  svg.dag line { stroke: var(--ink-2); stroke-width: 1.6; }
+  svg.dag line.effect { stroke: var(--ink); stroke-width: 2.2; }
+  svg.dag marker path { fill: var(--ink-2); }
+  svg.dag text { font-size: 14px; font-weight: 600; fill: var(--ink); }
+  .dag-text { margin: 6px 0 0; font-size: 0.92rem; }
+  .ctl-note { font-size: 0.85rem; color: var(--ink-2); margin: 6px 0 0; }
+  .ctl-note:empty { display: none; }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><div class="inner">
+  <a class="site-title" href="index.html">Causal Playground</a>
+  <nav class="site-nav" aria-label="Modules">
+    <span class="nav-part"><span class="nav-part-name">1 Randomized experiments</span> <a href="randomization-inference.html">Randomization inference</a> <a href="neyman.html">Neyman and blocking</a></span>
+    <span class="nav-part"><span class="nav-part-name">2 Observational studies</span> <a href="controls.html" aria-current="page">Regression and controls</a></span>
+    <span class="nav-part"><span class="nav-part-name">3 Noncompliance</span> <a href="iv.html">Instrumental variables</a> <a href="principal-strata.html">Principal strata</a></span>
+    <span class="nav-part"><span class="nav-part-name">4 Regression discontinuity</span> <a href="rd.html">Sharp design</a></span>
+    <span class="nav-part"><span class="nav-part-name">5 Difference-in-differences</span> <a href="did.html">Parallel trends</a> <a href="staggered.html">Staggered adoption</a> <a href="event-study.html">Event study</a></span>
+    <span class="nav-part"><span class="nav-part-name">6 Prediction and decisions</span> <a href="selective-labels.html">Selective labels</a> <a href="uplift.html">Uplift targeting</a></span>
+  </nav>
+</div></header>
+
+<main id="main">
+<p class="kicker">2.1 Observational studies</p>
+<h1>Regression adjustment and good and bad controls: what to adjust for, and how</h1>
+<p class="lede">In an observational study, people choose their treatment, so the groups differ before the treatment starts. Adjusting for the right variables can remove this difference. This page shows how regression adjustment works, when one regression coefficient misses the average effect, and why a study should not adjust for some variables.</p>
+
+<section class="prose" aria-labelledby="brief">
+<h2 id="brief">In brief</h2>
+<p>A shop sells a paid membership, and each customer decides whether to join. The shop wants the effect of joining on spending in the next month. Loyal customers join more often, and they also spend more without the membership.</p>
+<ul>
+<li>The <strong>average treatment effect (ATE)</strong> is the average effect of joining over all customers. The <strong>average treatment effect on the treated (ATT)</strong> is the average effect over the members.</li>
+<li>Estimate A, the <strong>simple difference in means</strong>, mixes the effect with an old gap between members and nonmembers.</li>
+<li>Estimate C, the <strong>segment differences weighted by segment size</strong>, compares members with nonmembers inside each segment. Under the assumptions in the explanation, C estimates the ATE.</li>
+<li>Estimate D, the <strong>regression with a separate intercept for each segment</strong>, gives little weight to segments where almost everyone or almost nobody joins.</li>
+<li>In part 2, a chain of stores wants the effect of local advertising on sales. The table shows the <strong>average estimate</strong> of two regressions over repeated samples, without and with a third variable, Z.</li>
+</ul>
+<p>Move the sliders and watch these numbers. The explanation below the simulation gives the reasons.</p>
+</section>
+
+<section aria-labelledby="try">
+<h2 id="try">Try it</h2>
+<p class="prose">The simulation has two parts, each with its own settings. Part 1 compares four estimates of the effect of the membership. Part 2 asks which variables a regression of sales on advertising should adjust for.</p>
+<details class="symbols" id="ctl-sim-details">
+<summary>How the simulation makes the data</summary>
+<p>In part 1, spending without the membership rises from one segment to the next. The curvature slider bends the rise in spending. When the joining slider is at 0, about three in four customers join in every segment. The simulation knows both potential outcomes of every customer. All amounts in part 1 are in dollars.</p>
+<p>In part 2, the page draws 500 stores, regresses sales on advertising with and without Z, and repeats this 400 times. With more than 500 stores, it repeats the draw 200 times, so that the page stays fast. The true effect of advertising is 1 in every case.</p>
+</details>
+
+<div class="sim">
+<h3>Part 1. Regression adjustment for the customer segment</h3>
+<p class="prose">The shop has 2,000 customers at first, in four segments of the same size. The joining slider sets how strongly the segment drives joining. The effect of joining rises across the segments by the effect-difference slider and averages 10 dollars.</p>
+<div class="sim-grid">
+<form id="adj-controls" class="controls" aria-label="Settings for part 1">
+  <div class="control">
+    <label for="adj-sel">How strongly the segment drives joining <output for="adj-sel"></output></label>
+    <input type="range" id="adj-sel" name="selection" min="0" max="3" step="0.1" value="1.5">
+    <p class="hint">At 0, joining has nothing to do with the segment.</p>
+  </div>
+  <div class="control">
+    <label for="adj-het">Effect difference between neighboring segments (dollars) <output for="adj-het"></output></label>
+    <input type="range" id="adj-het" name="hetero" min="0" max="8" step="0.5" value="4">
+  </div>
+  <div class="control">
+    <label for="adj-curve">Curvature of spending across segments (dollars) <output for="adj-curve"></output></label>
+    <input type="range" id="adj-curve" name="curve" min="0" max="10" step="0.5" value="0">
+    <p class="hint">At 0, spending without the membership rises by the same amount from one segment to the next.</p>
+  </div>
+  <div class="control">
+    <label for="adj-n">Number of customers <output for="adj-n"></output></label>
+    <input type="range" id="adj-n" name="n" min="400" max="8000" step="400" value="2000" data-format="int">
+  </div>
+  <div class="button-row">
+    <button type="button" id="adj-new">Draw a new sample</button>
+    <button type="reset">Reset</button>
+    <span class="sample-label" id="adj-sample"></span>
+  </div>
+</form>
+<div class="chart-stack">
+<figure class="chart">
+  <ul class="legend" id="adj-means-legend"></ul>
+  <svg id="adj-means"></svg>
+  <p class="ctl-note" id="adj-key"></p>
+  <figcaption>Dots show the average spending of members and nonmembers in each segment. A missing dot means that the segment has no customers in that group. The dashed lines show the true averages with and without the membership. The two dotted gray lines show the fit of the regression with a straight line in the segment number. This regression assumes the same rise in spending from each segment to the next and the same effect in every segment. Hover over a dot to see its values.</figcaption>
+</figure>
+<figure class="chart">
+  <ul class="legend" id="adj-est-legend"></ul>
+  <svg id="adj-est"></svg>
+  <figcaption>Each dot is an estimate, and each vertical line is its 95% confidence interval. The intervals use robust standard errors, which allow the variance to differ across groups. The dark dashed line marks the true ATE, and the light dashed line the true ATT. Hover over a dot to see its values.</figcaption>
+</figure>
+</div>
+</div>
+<dl class="readout">
+  <div><dt>A. Simple difference in means</dt><dd id="adj-r-naive"></dd></div>
+  <div><dt>B. Regression with a straight line in the segment number</dt><dd id="adj-r-line"></dd></div>
+  <div><dt>C. Segment differences weighted by segment size</dt><dd id="adj-r-strat"></dd></div>
+  <div><dt>D. Regression with a separate intercept for each segment</dt><dd id="adj-r-fe"></dd></div>
+  <div><dt>True ATE (simulation only)</dt><dd id="adj-r-ate"></dd></div>
+  <div><dt>True ATT (simulation only)</dt><dd id="adj-r-att"></dd></div>
+  <div><dt>Average of the true segment effects with the weights of D (simulation only)</dt><dd id="adj-r-fet"></dd></div>
+</dl>
+<p class="hint">Each estimate shows its 95% confidence interval in parentheses.</p>
+<p class="ctl-note" id="adj-note"></p>
+<div class="results-wrap">
+<table class="results">
+  <caption>The segments and the weights of estimators C and D</caption>
+  <thead><tr><th scope="col">Segment</th><th scope="col">New</th><th scope="col">Occasional</th><th scope="col">Regular</th><th scope="col">Loyal</th></tr></thead>
+  <tbody>
+    <tr><td>Members</td><td id="adj-s0-share"></td><td id="adj-s1-share"></td><td id="adj-s2-share"></td><td id="adj-s3-share"></td></tr>
+    <tr><td>Spending without membership</td><td id="adj-s0-mean0"></td><td id="adj-s1-mean0"></td><td id="adj-s2-mean0"></td><td id="adj-s3-mean0"></td></tr>
+    <tr><td>True effect</td><td id="adj-s0-effect"></td><td id="adj-s1-effect"></td><td id="adj-s2-effect"></td><td id="adj-s3-effect"></td></tr>
+    <tr><td>Weight in C</td><td id="adj-s0-wd"></td><td id="adj-s1-wd"></td><td id="adj-s2-wd"></td><td id="adj-s3-wd"></td></tr>
+    <tr><td>Weight in D</td><td id="adj-s0-wc"></td><td id="adj-s1-wc"></td><td id="adj-s2-wc"></td><td id="adj-s3-wc"></td></tr>
+  </tbody>
+</table>
+<p class="hint">Spending without the membership and the true effect are the segment values that the simulation uses. Only a simulation knows them.</p>
+</div>
+</div>
+
+<div class="sim">
+<h3>Part 2. Good and bad controls</h3>
+<p class="prose">A chain of stores wants the effect of local advertising (D) on sales (Y). Each choice below adds a third measured variable, Z, in a different place in the causal diagram. Some choices also add a hidden variable that nobody measured (U).</p>
+<div class="sim-grid">
+<form id="dag-controls" class="controls" aria-label="Settings for part 2">
+  <div class="control">
+    <label for="dag-structure">Where Z sits in the diagram</label>
+    <select id="dag-structure" name="structure">
+      <option value="confounder" selected>Confounder: store size</option>
+      <option value="mediator">Mediator: store visits</option>
+      <option value="collider">Collider: award for top stores</option>
+      <option value="mbias">M-structure: press coverage</option>
+      <option value="outcomeCause">Cause of sales only: weather</option>
+      <option value="treatmentCause">Cause of advertising only: agency quota</option>
+      <option value="amplify">Cause of advertising, plus a hidden confounder</option>
+    </select>
+  </div>
+  <div class="control">
+    <label for="dag-strength">Strength of the arrows into and out of Z <output for="dag-strength"></output></label>
+    <input type="range" id="dag-strength" name="strength" min="0" max="1.5" step="0.05" value="0.6">
+    <p class="hint">At 0, Z is unrelated to everything else. In the M-structure, the arrows from the hidden U1 and U2 have the same strength. In the last case, the hidden confounder U keeps a strength of 0.6.</p>
+  </div>
+  <div class="control">
+    <label for="dag-n">Stores in each sample <output for="dag-n"></output></label>
+    <input type="range" id="dag-n" name="n" min="100" max="1000" step="100" value="500" data-format="int">
+  </div>
+  <div class="button-row">
+    <button type="button" id="dag-new">Draw a new sample</button>
+    <button type="reset">Reset</button>
+    <span class="sample-label" id="dag-sample"></span>
+  </div>
+</form>
+<div class="chart-stack">
+<div class="dag-wrap" id="dag-figure"></div>
+<p class="dag-text" id="dag-z"></p>
+<p class="dag-text" id="dag-paths"></p>
+<p class="dag-text"><strong id="dag-verdict"></strong></p>
+<figure class="chart">
+  <ul class="legend" id="dag-est-legend"></ul>
+  <svg id="dag-est"></svg>
+  <figcaption>The diagram shows D for advertising, Y for sales, and Z for the third variable. Dashed circles are variables that nobody measured. Each dot in the chart is the average estimate over the repeated samples, and each vertical line covers the middle 95% of the estimates. The dashed line marks the true effect. Hover over a dot to see its values.</figcaption>
+</figure>
+</div>
+</div>
+<div class="results-wrap">
+<table class="results">
+  <caption>The two regressions over <span id="dag-reps">400</span> samples</caption>
+  <thead><tr><th scope="col">Regression of sales on</th><th scope="col"><span class="swatch s2"></span>Advertising</th><th scope="col"><span class="swatch s1"></span>Advertising and Z</th></tr></thead>
+  <tbody>
+    <tr><td>Average estimate</td><td id="dag-without-mean"></td><td id="dag-with-mean"></td></tr>
+    <tr><td>Standard deviation</td><td id="dag-without-sd"></td><td id="dag-with-sd"></td></tr>
+    <tr><td>95% intervals that contain the true effect of 1</td><td id="dag-without-cover"></td><td id="dag-with-cover"></td></tr>
+    <tr><td>Bias in large samples</td><td id="dag-without-bias"></td><td id="dag-with-bias"></td></tr>
+  </tbody>
+</table>
+<p class="hint">The bias in large samples comes from the linear model with the current strength. Only a simulation knows it.</p>
+</div>
+</div>
+<noscript><p class="noscript">The simulation needs JavaScript. The text on this page still explains the method.</p></noscript>
+</section>
+
+<aside class="notice" aria-labelledby="notice">
+<h2 id="notice">What to notice</h2>
+<ul>
+  <li>At the default settings, the simple difference (A) is 26.02, while the true ATE is 10.00. This is because loyal customers join more often and spend more even without the membership. The segment differences weighted by segment size (C) give 9.99. The regression with segment intercepts (D) gives 8.18. The weights table shows why: D gives new and occasional customers, whose effects are smallest, more weight than their share. Set the effect difference to 0: D moves to 10.09.</li>
+  <li>Set the effect difference back to 4 and the curvature to 8. The regression with a straight line (B) drops to 4.84, because the dotted lines no longer follow the curved averages. Raise the number of customers to 4,800. The interval of B narrows. It ran from 3.22 to 6.47, and it now runs from 3.57 to 5.61, so it still misses the ATE. C gives 10.00.</li>
+  <li>Set the curvature back to 0, the customers back to 2,000, and the joining slider to 3. In Sample 1, only 1 of the 500 loyal customers does not join, so overlap almost fails in the loyal segment. C still gives a number, 10.87, but it rests on that one customer, and no interval can be computed. B and D report narrow intervals. They rely on the other segments and on the model, and the weights table shows that D gives the loyal segment almost no weight.</li>
+  <li>In Part 2, with the confounder, the regression without Z averages 1.264, and none of its intervals contains the true effect of 1. With Z it averages 0.999. Choose the mediator: with Z, the estimate falls to 0.641, because it loses the part of the effect that runs through store visits. Choose the collider: with Z, it falls to 0.472. Choose the M-structure: with Z, the estimate moves only to 0.943, yet only 75.8% of its intervals contain 1. Move the strength to 1.5: with Z, it moves to 0.608.</li>
+  <li>Set the strength back to 0.6. Choose the weather, a cause of sales only. Both regressions average about 1, and adjusting for Z lowers the standard deviation from 0.054 to 0.047. Choose the agency quota, a cause of advertising only: adjusting raises it from 0.040 to 0.047. Choose the last case: without Z, the skill of the store manager, which nobody measured, already biases the estimate to 1.211. Adjusting for the quota raises it to 1.265.</li>
+</ul>
+</aside>
+
+<section class="prose" aria-labelledby="idea">
+<h2 id="idea">The idea</h2>
+<p>A shop sells a paid membership, and each customer decides whether to join. The shop wants the effect of joining on spending in the next month. Loyal customers join more often, and they also spend more without the membership. So the simple difference between members and nonmembers mixes the effect with an old gap. It equals the average treatment effect on the treated (ATT) plus selection bias, as the <a href="index.html#terms">key terms</a> explain.</p>
+<p>Suppose that the customer segment (new, occasional, regular, or loyal) is the only common cause of joining and spending. This is the assumption of no unmeasured confounding, also called unconfoundedness or selection on observables. Suppose also that every segment has both members and nonmembers. This is called overlap, or positivity. Then a comparison inside each segment is unbiased.</p>
+<p>Comparing inside segments is called adjusting for the segment, and a variable that a study adjusts for is called a control. The average of the comparisons, weighted by the segment shares of all customers, is the average treatment effect (ATE). This method is regression adjustment by imputation. It predicts the spending of each customer with and without the membership, here from the segment averages. Then it averages the difference over all customers (Hern&aacute;n and Robins 2020, ch. 13).</p>
+<p>A common shortcut is one regression of spending on a membership indicator and a separate intercept for each segment. Its single membership coefficient weights each segment by its size times \(p(1 - p)\), where p is the segment's share of members (Angrist 1998). Segments where almost everyone or almost nobody joins get little weight. If the effect differs across segments, this coefficient is a different average than the ATE. Module 1.2 shows the same weights in a block experiment.</p>
+<p>In symbols, let the segments be \(s = 1, \ldots, 4,\) with segment shares \(w_s\). Let \(p_s\) be the member share and \(\tau_s\) the effect in segment \(s\). The imputation estimator targets \(\sum w_s \tau_s = \text{ATE}\). The membership coefficient of the regression with segment intercepts targets</p>
+<p class="formula">\[\frac{\sum w_s p_s (1 - p_s) \tau_s}{\sum w_s p_s (1 - p_s)}\]</p>
+<details class="symbols" id="ctl-model-problems-details">
+<summary>Two more problems: a straight line and a lack of overlap</summary>
+<p>A regression model can add two more problems. One is a straight line in the segment number, which counts the segments from new to loyal. Such a line misses a curved pattern in spending, and the bias does not shrink with more data.</p>
+<p>The other is a lack of overlap: if a segment has only members, no comparison inside it is possible. A model can still extrapolate a number for that segment. The number then comes from the model, not from the data. Its 95% confidence interval contains the truth less often than 95% of the time (Hern&aacute;n and Robins 2020, ch. 13).</p>
+</details>
+<p>Which variables belong in the adjustment? A causal diagram, or directed acyclic graph (DAG), draws each variable as a node and each direct cause as an arrow. A path is a chain of arrows between two variables, in any direction. Adjusting for a variable on a path blocks the path, unless the variable is a collider.</p>
+<p>A <strong>back-door path</strong> is a path between the treatment and the outcome that starts with an arrow into the treatment. Adjusting for a set of variables gives the causal effect if the set blocks every back-door path and contains no variable that the treatment affects. This rule is the back-door criterion (Cinelli, Forney, and Pearl 2024).</p>
+<p>The rule sorts candidate variables into good and bad controls (Cinelli, Forney, and Pearl 2024):</p>
+<ul>
+  <li>A <strong>confounder</strong>, a common cause of the treatment and the outcome, is a good control.</li>
+  <li>A <strong>mediator</strong> lies on the path from the treatment to the outcome. The total effect of the treatment includes the part that runs through the mediator. So for the total effect, a mediator is a bad control: adjusting for it removes part of the effect.</li>
+  <li>A <strong>collider</strong> is a common effect of two variables on a path. The collider blocks the path by itself, and adjusting for it opens the path (Huntington-Klein 2025, ch. 8). The bias that this creates is called collider bias. Keeping only the stores that won an award for high advertising or high sales works the same way, because the award is a collider.</li>
+  <li>A variable measured before the treatment can still be a collider. In the M-structure, it has two hidden causes, which nobody measured. One of them also causes the treatment, and the other also causes the outcome. In the simulation above, the bias from adjusting for it stays small unless the arrows are strong.</li>
+  <li>A cause of the outcome only does not change the bias, and adjusting for it usually makes the estimate more precise.</li>
+  <li>A cause of the treatment only does not change the bias either, but adjusting for it makes the estimate less precise. If a hidden confounder also exists, adjusting for the cause of the treatment can increase the bias. In linear models, this adjustment always increases the bias.</li>
+</ul>
+<p>In part 2, every variable is a linear function of its causes plus independent noise with variance 1. Advertising D has a true effect of 1 on sales Y. The strength slider sets every arrow into and out of Z, and in the M-structure also the arrows from the hidden variables. In the last case, the hidden confounder keeps a strength of 0.6.</p>
+</section>
+
+<section class="refs prose" aria-labelledby="refs">
+<h2 id="refs">References</h2>
+<ol id="ctl-refs">
+  <li>Angrist, J. D. (1998). Estimating the labor market impact of voluntary military service using Social Security data on military applicants. <cite>Econometrica, 66</cite>(2), 249-288. <a href="https://doi.org/10.2307/2998558">https://doi.org/10.2307/2998558</a></li>
+  <li>Cinelli, C., Forney, A., &amp; Pearl, J. (2024). A crash course in good and bad controls. <cite>Sociological Methods &amp; Research, 53</cite>(3), 1071-1104. <a href="https://doi.org/10.1177/00491241221099552">https://doi.org/10.1177/00491241221099552</a></li>
+  <li>Hern&aacute;n, M. A., &amp; Robins, J. M. (2020). <cite>Causal inference: What if</cite>. Chapman &amp; Hall/CRC. Chapter 13, Standardization and the parametric g-formula (sections 13.3 and 13.5, and Fine Point 13.1). <a href="https://miguelhernan.org/whatifbook">https://miguelhernan.org/whatifbook</a></li>
+  <li>Huntington-Klein, N. (2025). <cite>The effect: An introduction to research design and causality</cite> (2nd ed.). Chapman &amp; Hall. Chapter 8, Causal Paths and Closing Back Doors. Free online edition: <a href="https://theeffectbook.net/ch-CausalPaths.html">https://theeffectbook.net/ch-CausalPaths.html</a></li>
+</ol>
+</section>
+
+<nav class="pager" aria-label="Module pages">
+  <a href="neyman.html">Previous: 1.2 Neyman variance and blocking</a>
+  <a href="iv.html">Next: 3.1 Noncompliance and instrumental variables</a>
+</nav>
+</main>
+
+<footer class="site-footer"><div class="inner">
+<p>All data on this site are simulated in your browser.</p>
+<p>Made by <a href="https://j1yoo.github.io/">Jaewon Yoo</a>, National Tsing Hua University. Code: <a href="https://polyformproject.org/licenses/noncommercial/1.0.0">PolyForm Noncommercial 1.0.0</a>. Text: <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/">Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 (CC BY-NC-ND 4.0)</a>.</p>
+</div></footer>
+<script src="assets/js/core/analytics.js"></script>
+<script src="assets/vendor/katex/katex.min.js"></script>
+<script src="assets/vendor/katex/auto-render.min.js"></script>
+<script src="assets/js/core/math.js"></script>
+<script src="assets/js/core/rng.js"></script>
+<script src="assets/js/core/stats.js"></script>
+<script src="assets/js/core/plot.js"></script>
+<script src="assets/js/core/ui.js"></script>
+<script src="assets/js/sims/controls.js"></script>
+<script src="assets/js/pages/controls-page.js"></script>
+</body>
+</html>

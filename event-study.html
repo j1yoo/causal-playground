@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Event study and placebo dates | Causal Playground</title>
+<meta name="description" content="Interactive simulation: event-study leads and lags, pre-trend tests, and placebo dates in daily data.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/vendor/katex/katex.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+  /* The shared rules give results tables a 320px minimum width and a 10em first column for long row labels.
+     The cells of this table are short, so it fits a phone screen without these minimums. */
+  #es-table, #es-table td:first-child { min-width: 0; }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><div class="inner">
+  <a class="site-title" href="index.html">Causal Playground</a>
+  <nav class="site-nav" aria-label="Modules">
+    <span class="nav-part"><span class="nav-part-name">1 Randomized experiments</span> <a href="randomization-inference.html">Randomization inference</a> <a href="neyman.html">Neyman and blocking</a></span>
+    <span class="nav-part"><span class="nav-part-name">2 Observational studies</span> <a href="controls.html">Regression and controls</a></span>
+    <span class="nav-part"><span class="nav-part-name">3 Noncompliance</span> <a href="iv.html">Instrumental variables</a> <a href="principal-strata.html">Principal strata</a></span>
+    <span class="nav-part"><span class="nav-part-name">4 Regression discontinuity</span> <a href="rd.html">Sharp design</a></span>
+    <span class="nav-part"><span class="nav-part-name">5 Difference-in-differences</span> <a href="did.html">Parallel trends</a> <a href="staggered.html">Staggered adoption</a> <a href="event-study.html" aria-current="page">Event study</a></span>
+    <span class="nav-part"><span class="nav-part-name">6 Prediction and decisions</span> <a href="selective-labels.html">Selective labels</a> <a href="uplift.html">Uplift targeting</a></span>
+  </nav>
+</div></header>
+
+<main id="main">
+<p class="kicker">5.3 Difference-in-differences</p>
+<h1>Event studies and placebo dates: reading pre-trends and ranking the policy date</h1>
+<p class="lede">An event study computes a separate estimate for each period before and after a policy starts. The estimates for the periods before the start show whether the treated group and the comparison group already moved apart before the policy. A placebo check repeats the estimate at dates when nothing happened and asks how unusual the estimate at the policy date is.</p>
+
+<section class="prose" aria-labelledby="brief">
+<h2 id="brief">In brief</h2>
+<p>In Part A, some stores of a chain start a policy in period 7, and the others do not. Part B follows the daily orders of an online store that starts a policy on a Monday.</p>
+<ul>
+<li>An <strong>event time</strong> is the distance in periods from the start of the policy. Each event time gets a difference-in-differences (DiD) estimate, measured against event time &minus;1. Event times &minus;6 to &minus;2 give the <strong>leads</strong>, and event times 0 to 5 give the <strong>lags</strong>.</li>
+<li>The <strong>pre-trend test</strong> asks whether all five leads are zero at the same time. A small p-value means that leads this far from zero would be unlikely if the trends before the policy were the same.</li>
+<li>The <strong>actual estimate</strong> compares the w days from the policy date on with the w days before it, where w is the window length.</li>
+<li>The <strong>naive t-test</strong> compares these two windows as if all days were independent.</li>
+<li>The <strong>placebo p-value</strong> is the rank of the policy date among K candidate dates, divided by K. The other candidate dates are placebo dates: dates when nothing happened.</li>
+</ul>
+<p>Move the sliders and watch these numbers. The explanation below the simulation gives the reasons.</p>
+</section>
+
+<section aria-labelledby="try">
+<h2 id="try">Try it</h2>
+<p class="prose">The page has two simulations. Part A shows an event study with many stores, and Part B shows placebo dates in one daily series. The data are simulated, so the page knows the true effect.</p>
+
+<div class="sim">
+<h3 id="part-a">Part A. An event study with leads and lags</h3>
+<p class="prose">The simulation has 40 treated stores and 40 comparison stores in periods 1 to 12. The treated stores start the policy in period 7 (event time 0). Each store has its own level and its own noise. Both groups share the same period-to-period changes, unless you move the extra-growth slider.</p>
+<div class="sim-grid">
+<form id="es-controls" class="controls" aria-label="Settings for Part A">
+  <div class="control">
+    <label for="es-jump">Effect when the policy starts <output for="es-jump"></output></label>
+    <input type="range" id="es-jump" name="jump" min="0" max="3" step="0.1" value="1">
+  </div>
+  <div class="control">
+    <label for="es-growth">Change in the effect per period <output for="es-growth"></output></label>
+    <input type="range" id="es-growth" name="growth" min="-0.3" max="0.5" step="0.05" value="0.2">
+    <p class="hint">After the start, the effect grows or shrinks by this amount in each period.</p>
+  </div>
+  <div class="control">
+    <label for="es-pretrend">Extra growth per period in the treated group without the policy <output for="es-pretrend"></output></label>
+    <input type="range" id="es-pretrend" name="pretrend" min="-0.3" max="0.3" step="0.02" value="0">
+    <p class="hint">Without the policy, the treated group grows faster or slower than the comparison group in every period, before and after the start.</p>
+  </div>
+  <div class="control">
+    <label for="es-noise">Noise (standard deviation) <output for="es-noise"></output></label>
+    <input type="range" id="es-noise" name="noise" min="0.2" max="4" step="0.1" value="1.5">
+  </div>
+  <div class="button-row">
+    <button type="button" id="es-new">Draw a new sample</button>
+    <button type="reset">Reset</button>
+    <span class="sample-label" id="es-sample"></span>
+  </div>
+</form>
+<figure class="chart">
+  <ul class="legend" id="es-legend"></ul>
+  <svg id="es-chart"></svg>
+  <figcaption>Dots show the estimate for each event time. The vertical line through each dot is its 95% confidence interval. The hollow dot at event time &minus;1 is the reference period. Hover over a dot to see its value.</figcaption>
+</figure>
+</div>
+<dl class="readout">
+  <div><dt>Average estimate, event times 0 to 5</dt><dd id="es-r-avg"></dd></div>
+  <div><dt>True average effect, event times 0 to 5</dt><dd id="es-r-true"></dd></div>
+  <div><dt>Average estimate minus true average effect</dt><dd id="es-r-bias"></dd></div>
+  <div><dt>Pre-trend test p-value (all five leads)</dt><dd id="es-r-p"></dd></div>
+</dl>
+<div class="results-wrap">
+<table class="results" id="es-table">
+  <caption>Estimates for each event time</caption>
+  <thead><tr><th scope="col">Event time</th><th scope="col">Estimate</th><th scope="col">95% confidence interval</th><th scope="col">True effect</th></tr></thead>
+  <tbody id="es-rows"></tbody>
+</table>
+</div>
+</div>
+
+<div class="sim">
+<h3 id="part-b">Part B. Placebo dates in daily data</h3>
+<p class="prose">The simulation has 60 weeks of daily orders. The first day is a Monday. The policy starts on the first day of week 53, also a Monday. Every candidate date uses windows of the same length. The window starts at 14 days, so each window holds every weekday twice.</p>
+<div class="sim-grid">
+<form id="pl-controls" class="controls" aria-label="Settings for Part B">
+  <div class="control">
+    <label for="pl-effect">True effect of the policy <output for="pl-effect"></output></label>
+    <input type="range" id="pl-effect" name="effect" min="0" max="3" step="0.1" value="1">
+    <p class="hint">Extra orders per day from the policy date on.</p>
+  </div>
+  <div class="control">
+    <label for="pl-weekly">Size of the weekly pattern <output for="pl-weekly"></output></label>
+    <input type="range" id="pl-weekly" name="weeklySize" min="0" max="4" step="0.1" value="2">
+    <p class="hint">Orders are higher on weekends and lower early in the week.</p>
+  </div>
+  <div class="control">
+    <label for="pl-rho">Day-to-day correlation of the noise <output for="pl-rho"></output></label>
+    <input type="range" id="pl-rho" name="rho" min="0" max="0.9" step="0.05" value="0.6">
+    <p class="hint">The share of a chance rise or fall in orders that carries over to the next day.</p>
+  </div>
+  <div class="control">
+    <label for="pl-sigma">Noise (standard deviation) <output for="pl-sigma"></output></label>
+    <input type="range" id="pl-sigma" name="sigma" min="0.5" max="3" step="0.1" value="1">
+    <p class="hint">The size of the new random shock on each day.</p>
+  </div>
+  <div class="control">
+    <label for="pl-w">Window length in days <output for="pl-w"></output></label>
+    <input type="range" id="pl-w" name="w" min="5" max="28" step="1" value="14">
+    <p class="hint">Each estimate compares the w days from a date on with the w days before it.</p>
+  </div>
+  <div class="control check">
+    <label for="pl-same"><input type="checkbox" id="pl-same" name="sameWeekday" checked>Use only placebo dates on the same weekday as the policy date</label>
+    <p class="hint">If you turn this off, every earlier day with two full windows before the policy date is a placebo date.</p>
+  </div>
+  <div class="button-row">
+    <button type="button" id="pl-new">Draw a new sample</button>
+    <button type="reset">Reset</button>
+    <span class="sample-label" id="pl-sample"></span>
+  </div>
+</form>
+<div>
+<figure class="chart">
+  <p class="chart-title">Daily orders around the policy date</p>
+  <svg id="pl-series"></svg>
+  <figcaption>The vertical line marks the policy date. The two shaded areas are the before window and the after window of the policy date. Short gray marks at the bottom show the placebo dates in the last 16 weeks before the policy. Earlier placebo dates are not shown.</figcaption>
+</figure>
+<figure class="chart">
+  <p class="chart-title">Estimates at all candidate dates</p>
+  <ul class="legend" id="pl-legend"></ul>
+  <svg id="pl-rank"></svg>
+  <figcaption>Each dot is the estimate at one candidate date, sorted from lowest to highest. The shaded band runs from minus to plus the size of the actual estimate. Dots on the edge of the band or outside it are at least as far from zero as the actual estimate. Hover over a dot to see its value.</figcaption>
+</figure>
+</div>
+</div>
+<dl class="readout">
+  <div><dt>Actual estimate (after minus before)</dt><dd id="pl-r-est"></dd></div>
+  <div><dt>Rank of the policy date among K candidate dates (1 = farthest from zero)</dt><dd id="pl-r-rank"></dd></div>
+  <div><dt>Placebo p-value (rank/K)</dt><dd id="pl-r-p"></dd></div>
+  <div><dt>Smallest possible placebo p-value (1/K)</dt><dd id="pl-r-pmin"></dd></div>
+  <div><dt>Naive t-test p-value</dt><dd id="pl-r-naive"></dd></div>
+  <div><dt>Spread of the placebo estimates (standard deviation)</dt><dd id="pl-r-sd"></dd></div>
+</dl>
+</div>
+<noscript><p class="noscript">The simulation needs JavaScript. The text on this page still explains the method.</p></noscript>
+</section>
+
+<aside class="notice" aria-labelledby="notice">
+<h2 id="notice">What to notice</h2>
+<ul>
+  <li>Part A: keep the extra-growth slider at 0 and draw several samples. Most intervals of the leads contain zero, and the pre-trend test p-value is above 0.05 in most samples. Now set the noise to 0.5 and the extra growth to 0.2. The leads climb toward zero at event time &minus;1, and most estimates after the start sit above the dashed true effect. The average estimate now exceeds the true average effect by about 0.7. The p-value falls below 0.001.</li>
+  <li>Part A: set the noise to 3 and the extra growth to 0.3, then draw several samples. In most samples the pre-trend test p-value is above 0.05, so the test does not detect the pre-trend. In most of these samples, the average estimate still exceeds the true average effect by more than 0.7.</li>
+  <li>Part B: set the effect to 0 and the day-to-day correlation to 0.9, then draw several samples. The naive t-test p-value is below 0.05 in about half of the samples, although nothing happened. The placebo p-value is rarely below 0.05.</li>
+  <li>Part B: press Reset. Then set the window to 10 days and the weekly pattern to 4. The actual estimate drops, in most samples below zero, although the true effect is still 1. The reason: the after window now holds more of the weekdays with few orders.</li>
+  <li>Part B, with the window still at 10 days: the same-weekday placebo estimates drop too. They center near &minus;1.5, in most samples farther from zero than the actual estimate. So the placebo p-value is large, in most samples above 0.5. Now turn the same-weekday option off. The placebo estimates spread out, and their standard deviation grows by about 0.3 to 0.5. With a 14-day window, the same switch changes the spread by less than 0.1 in most samples.</li>
+  <li>Part B: look at K, the second number in the rank readout. With the same-weekday option off, K is more than 300, and the smallest possible placebo p-value is about 0.003. Turn the option on. K falls to about 50, so the placebo p-value cannot fall below about 0.02, even with a large effect.</li>
+</ul>
+</aside>
+
+<section class="prose" aria-labelledby="idea">
+<h2 id="idea">The idea</h2>
+<h3>Leads and lags</h3>
+<p>A chain of stores starts a new policy in some of its stores in period 7. The other stores do not start the policy. We call the first set of stores the treated group and the second set the comparison group. We observe an outcome, for example weekly sales, in periods 1 to 12.</p>
+<p>Difference-in-differences (DiD) compares the change in the treated group with the change in the comparison group over the same time. An <strong>event study</strong> computes one DiD estimate for each period. We label each period t by its <strong>event time</strong> \(e = t - 7\), the distance in periods from the start of the policy. Event time 0 is the first period with the policy. Event time &minus;1 is the last period before the policy.</p>
+<p>Each estimate compares event time e with event time &minus;1:</p>
+<p class="formula">\[\begin{aligned} & \text{estimate for event time } e \\ = {} & (\text{treated at } e - \text{treated at } {-1}) \\ & - (\text{comparison at } e - \text{comparison at } {-1}) \end{aligned}\]</p>
+<p>Event time &minus;1 is the <strong>reference period</strong>. Its estimate is 0 by construction, so it has no confidence interval. All other estimates are measured against it. So chance noise in the reference period moves all estimates up or down together.</p>
+<details class="symbols" id="es-se-symbols">
+<summary>The standard errors in symbols</summary>
+<p>Write \(y_{it}\) for the outcome of store \(i\) in period \(t\). Let \(d_{ie} = y_{ie} - y_{i,-1}\) be the change of store \(i\) from event time &minus;1 to \(e\). The standard error is the square root of \(\operatorname{var}_T(d_e)/n_T + \operatorname{var}_C(d_e)/n_C\). Here \(T\) and \(C\) mark the treated and comparison groups. The 95% confidence interval is the estimate plus or minus 1.96 standard errors.</p>
+</details>
+<p>The estimates for event times &minus;6 to &minus;2 are the <strong>leads</strong>. The estimates for event times 0 to 5 are the <strong>lags</strong>. The lags show how the effect changes over time.</p>
+<details class="symbols" id="es-regression-details">
+<summary>The same estimates from a regression</summary>
+<p>The same numbers come from a regression. It has a separate intercept for each store (unit fixed effects) and a separate intercept for each period (period fixed effects). It also has one indicator for each event time, which is 1 for treated stores in that period.</p>
+<p>The regression must leave out one of these indicators, or it has no unique solution. This page leaves out the indicator for event time &minus;1, the last period before the policy, as Huntington-Klein (2025, ch. 18) does.</p>
+<p>In symbols, write \(y_{it}\) for the outcome of store \(i\) in period \(t\), and \(D_i = 1\) for a treated store. The event-study regression is</p>
+<p class="formula">\[\begin{aligned} y_{it} = {} & \alpha_i + \gamma_t \\ & + \sum_{e \neq -1} \beta_e D_i \mathbf{1}[t - 7 = e] + \varepsilon_{it} \end{aligned}\]</p>
+<p>With one start date and a comparison group that never starts the policy, the estimate of \(\beta_e\) equals the DiD formula above.</p>
+<p>Some books number the periods in another way. For example, Huntington-Klein (2025, ch. 18) calls the last period before the policy period 0.</p>
+</details>
+<h3>What the leads can and cannot show</h3>
+<p>In this simulation, the policy has no effect before it starts (no anticipation). So if the two groups had the same trend before the policy, the leads are near zero, apart from noise. Leads that move away from zero then show a <strong>pre-trend</strong>: the trends of the two groups already differed before the policy. In real data, no anticipation is an assumption. A <strong>pre-trend test</strong> asks whether all five leads are zero at the same time. A small p-value means that leads this far from zero would be unlikely if the trends before the policy were the same.</p>
+<details class="symbols" id="es-pretrend-symbols">
+<summary>The pre-trend test in symbols</summary>
+<p>The pre-trend test statistic is \(W = b' V^{-1} b\). Here \(b\) holds the five leads. Their covariance matrix is \(V = \operatorname{cov}_T(d)/n_T + \operatorname{cov}_C(d)/n_C\). It is computed from the changes \(d\) at event times &minus;6 to &minus;2.</p>
+<p>The p-value comes from a chi-square distribution with 5 degrees of freedom. This distribution is an approximation for large samples. With 40 stores per group and no pre-trend, about 7 percent of the samples in this simulation give a p-value below 0.05, not 5 percent. Suppose that the treated group grows by \(\delta\) more per period without the policy. Then \(\beta_e\) estimates \(\tau_e + \delta(e + 1)\), where \(\tau_e\) is the true effect.</p>
+</details>
+<p>Passing the pre-trend test does not show that parallel trends holds. The <strong>parallel trends assumption</strong> says that without the policy, the treated group would have changed by the same amount as the comparison group. It concerns the periods after the start, and nobody observes the treated group without the policy in those periods. So no test of the data can check the assumption. The leads show only whether the trends differed before the policy (Huntington-Klein 2025, ch. 18).</p>
+<p>A pre-trend test can also miss a pre-trend that exists. The <strong>power</strong> of a test is the chance that it detects a difference that exists. Pre-trend tests can have low power (Roth 2022). A small pre-trend in noisy data often passes the test, and the estimates after the start are still biased.</p>
+<details class="symbols" id="es-pretest-details">
+<summary>Bias after a passed pre-trend test</summary>
+<p>Roth (2022) also shows a second problem. Suppose that an analysis goes ahead only after it passes a pre-trend test. Then the bias of the estimates can grow, and the confidence intervals can miss the true effect more often.</p>
+<p>We ran the simulation in Part A 4,000 times with noise 3 and extra growth 0.3. About 70 percent of the samples passed the test (p-value above 0.05). In the samples that passed, the average estimate after the start missed the true average effect by about 1.2. In the samples that failed, it missed by about 0.7.</p>
+</details>
+<p>An estimate is <strong>statistically significant</strong> at the 5 percent level if its test gives a p-value below 0.05. For a single lead or lag, this is the case when its 95% confidence interval does not contain zero. With many leads, some can look significant by chance alone, even when nothing is wrong (Huntington-Klein 2025, ch. 18).</p>
+<h3>Placebo dates in daily data</h3>
+<p>Now take one daily series, for example the daily orders of an online store. The store starts a policy on a Monday. We call this day the <strong>policy date</strong>.</p>
+<p>A simple estimate compares the average of the w days from the policy date on with the average of the w days before it. Here w is the window length in days. We call these two sets of days the after window and the before window. We call the estimate at the policy date the <strong>actual estimate</strong>.</p>
+<p>Daily noise can be correlated from one day to the next: a busy day tends to be followed by another busy day. A <strong>naive t-test</strong> compares the two windows as if all days were independent. Huntington-Klein (2025, ch. 17) describes what happens in data with this kind of correlation. Pick a date at random, when nothing happened. A test that treats the days as independent then finds a statistically significant effect about half the time. A test at the 5 percent level should find a significant effect at such a date only 5 percent of the time.</p>
+<details class="symbols" id="es-daily-symbols">
+<summary>The daily series, the estimate, and the naive t-test in symbols</summary>
+<p>Write \(y_d\) for the orders on day \(d\) and \(D_0\) for the policy date. The simulation draws</p>
+<p class="formula">\[\begin{aligned} y_d = {} & 100 + s \cdot \operatorname{pattern}(\text{weekday of } d) \\ & + \tau \cdot \mathbf{1}[d \ge D_0] + u_d, \\ u_d = {} & \rho \, u_{d-1} + \varepsilon_d \end{aligned}\]</p>
+<p>The pattern from Monday to Sunday is &minus;0.8, &minus;0.6, &minus;0.4, &minus;0.2, 0.2, 1.0, 0.8, and \(s\) is the size of the weekly pattern. The shocks \(\varepsilon_d\) are independent normal draws with standard deviation \(\sigma\). The estimate at date \(c\) is</p>
+<p class="formula">\[\begin{aligned} \operatorname{est}(c) = {} & \operatorname{mean}(y_c, \ldots, y_{c+w-1}) \\ & - \operatorname{mean}(y_{c-w}, \ldots, y_{c-1}) \end{aligned}\]</p>
+<p>The naive t-test is a pooled two-sample t-test of the two windows with \(2w - 2\) degrees of freedom.</p>
+</details>
+<p>A <strong>placebo date</strong> is a date when nothing happened. Abadie, Diamond, and Hainmueller (2015) call checks at such dates in-time placebos: they apply the method to dates when the intervention did not occur. On this page, each placebo date uses only data from before the policy: both of its windows end before the policy date. Huntington-Klein (2025, ch. 18) describes this check. He also suggests trying many placebo dates and seeing where the actual estimate falls among the placebo estimates. He calls this approach <strong>randomization inference</strong> (see the <a href="index.html#terms">key terms</a>).</p>
+<p>The logic is this. Suppose that the policy changed nothing and that nothing else happened on the policy date. Then the policy date is one more date like the placebo dates, and its estimate is one more draw from the same distribution as theirs. The ranking uses no standard error, so it needs no formula that treats the days as independent. It needs another condition instead: without the policy, the policy date must be like the placebo dates.</p>
+<p>The page computes the estimate at every <strong>candidate date</strong>: the policy date and each placebo date. K is the number of candidate dates. The page ranks the candidate dates by the distance of their estimate from zero, and rank 1 is the largest distance. The <strong>placebo p-value</strong> is the rank of the policy date divided by K:</p>
+<p class="formula">\[\text{placebo p-value} = \frac{\begin{gathered} \text{number of candidate dates} \\ \text{with an estimate} \\ \text{at least as far from zero} \\ \text{as the actual estimate} \end{gathered}}{K}\]</p>
+<p>The policy date counts in both parts of the fraction. So the smallest possible p-value is \(1/K\).</p>
+<details class="symbols" id="es-pvalue-details">
+<summary>One-sided tests, the floor of \(1/K\), and when the p-value is exact</summary>
+<p>In symbols, a placebo date \(c\) needs \(c - w \ge 0\) and \(c + w - 1 &lt; D_0\). The placebo p-value is the number of candidate dates \(c\) with \(|\operatorname{est}(c)| \ge |\operatorname{est}(D_0)|\), divided by \(K\).</p>
+<p>Ranking by the distance from zero looks for a change in either direction, so this is a two-sided test. If only an increase counts as evidence, a one-sided version ranks the signed estimates instead, from the largest increase down.</p>
+<p>Abadie, Diamond, and Hainmueller (2015) define a p-value of this kind for placebo checks across comparison units. Their p-value is the fraction of placebo effects that are greater than or equal to the effect for the treated unit. This page applies the same rule to placebo dates.</p>
+<p>The floor of \(1/K\) matters in real studies. In their study of German reunification, West Germany ranked first among 17 countries in a placebo test across countries. So its p-value was 1/17, about 0.06, and no result in that study could fall below 0.05 (Abadie, Diamond, and Hainmueller 2015).</p>
+<p>Suppose that the policy date was chosen as if at random from the candidate dates. Then the placebo p-value is exact. When the policy has no effect, the chance of a p-value at or below 0.10 is at most 0.10. The same holds for every other level. If the policy date was not chosen in this way, the p-value describes how unusual the actual estimate is among dates when nothing happened. Abadie, Diamond, and Hainmueller (2015) give the same two readings for their p-value across units.</p>
+</details>
+<details class="symbols" id="es-weekday-details">
+<summary>Why the placebo dates are on the same weekday</summary>
+<p>Daily orders often follow a weekly pattern. In this simulation, orders are highest on weekends. A window of 7, 14, 21, or 28 days holds each weekday the same number of times. So the weekly pattern cancels out of the estimate. A window of another length does not.</p>
+<p>For example, a 10-day after window that starts on a Monday holds two Mondays, two Tuesdays, and two Wednesdays. The 10 days before that Monday hold two Fridays, two Saturdays, and two Sundays. So the estimate also contains a difference between weekdays.</p>
+<p>A placebo date on another weekday covers a different mix of weekdays, so its estimate contains a different weekday difference. A placebo date on the same weekday as the policy date has the same mix as the policy date. So when the policy has no effect, the actual estimate is like one more placebo estimate. For this reason, the page uses only placebo dates on the same weekday by default. This is a design choice. One applied example is Cattaneo, D&iacute;az, and Titiunik (2026), who use placebo adoption dates on the same weekday in daily crime data.</p>
+<p>Same-weekday placebo dates do not remove the weekday difference. It stays in the actual estimate and in every placebo estimate. In this simulation, the weekday difference is negative for every window length that is not a multiple of 7.</p>
+<p>A positive effect of the policy moves the actual estimate up, so the actual estimate can end up closer to zero than the placebo estimates. Because the placebo p-value ranks the estimates by their distance from zero, it can then be large although the policy has an effect. A window of 7, 14, 21, or 28 days has no weekday difference. For this reason, the page starts with a 14-day window.</p>
+</details>
+</section>
+
+<section class="refs prose" aria-labelledby="refs">
+<h2 id="refs">References</h2>
+<ol id="es-refs">
+  <li>Abadie, A., Diamond, A., &amp; Hainmueller, J. (2015). Comparative politics and the synthetic control method. <cite>American Journal of Political Science, 59</cite>(2), 495-510. <a href="https://doi.org/10.1111/ajps.12116">https://doi.org/10.1111/ajps.12116</a></li>
+  <li>Cattaneo, M. D., D&iacute;az, C., &amp; Titiunik, R. (2026). Randomization inference for before-and-after studies with multiple units: An application to a criminal procedure reform in Uruguay. <cite>Journal of the Royal Statistical Society Series A: Statistics in Society, 189</cite>(4), 2127-2146. <a href="https://doi.org/10.1093/jrsssa/qnaf192">https://doi.org/10.1093/jrsssa/qnaf192</a></li>
+  <li>Huntington-Klein, N. (2025). <cite>The effect: An introduction to research design and causality</cite> (2nd ed.). Chapman &amp; Hall. Chapter 17, Event Studies, and chapter 18, Difference-in-Differences. Free online edition: <a href="https://theeffectbook.net/ch-EventStudies.html">chapter 17</a> and <a href="https://theeffectbook.net/ch-DifferenceinDifference.html">chapter 18</a>.</li>
+  <li>Roth, J. (2022). Pretest with caution: Event-study estimates after testing for parallel trends. <cite>American Economic Review: Insights, 4</cite>(3), 305-322. <a href="https://doi.org/10.1257/aeri.20210236">https://doi.org/10.1257/aeri.20210236</a></li>
+</ol>
+</section>
+
+<nav class="pager" aria-label="Module pages">
+  <a href="staggered.html">Previous: 5.2 Staggered adoption</a>
+  <a href="selective-labels.html">Next: 6.1 Selective labels</a>
+</nav>
+</main>
+
+<footer class="site-footer"><div class="inner">
+<p>All data on this site are simulated in your browser.</p>
+<p>Made by <a href="https://j1yoo.github.io/">Jaewon Yoo</a>, National Tsing Hua University. Code: <a href="https://polyformproject.org/licenses/noncommercial/1.0.0">PolyForm Noncommercial 1.0.0</a>. Text: <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/">Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 (CC BY-NC-ND 4.0)</a>.</p>
+</div></footer>
+<script src="assets/js/core/analytics.js"></script>
+<script src="assets/vendor/katex/katex.min.js"></script>
+<script src="assets/vendor/katex/auto-render.min.js"></script>
+<script src="assets/js/core/math.js"></script>
+<script src="assets/js/core/rng.js"></script>
+<script src="assets/js/core/stats.js"></script>
+<script src="assets/js/core/plot.js"></script>
+<script src="assets/js/core/ui.js"></script>
+<script src="assets/js/sims/eventstudy.js"></script>
+<script src="assets/js/pages/eventstudy-page.js"></script>
+</body>
+</html>

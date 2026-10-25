@@ -1,0 +1,9 @@
+{
+  "name": "causal-playground",
+  "private": true,
+  "description": "Interactive teaching pages for causal inference. No dependencies.",
+  "scripts": {
+    "test": "node --test \"tests/*.test.js\"",
+    "check": "node tools/check-pages.mjs && node tools/check-analytics.mjs"
+  }
+}

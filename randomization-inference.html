@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Randomization inference | Causal Playground</title>
+<meta name="description" content="Interactive simulation: an exact randomization test in a small experiment, the choice of test statistic, and a confidence interval from inverting the test.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/vendor/katex/katex.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><div class="inner">
+  <a class="site-title" href="index.html">Causal Playground</a>
+  <nav class="site-nav" aria-label="Modules">
+    <span class="nav-part"><span class="nav-part-name">1 Randomized experiments</span> <a href="randomization-inference.html" aria-current="page">Randomization inference</a> <a href="neyman.html">Neyman and blocking</a></span>
+    <span class="nav-part"><span class="nav-part-name">2 Observational studies</span> <a href="controls.html">Regression and controls</a></span>
+    <span class="nav-part"><span class="nav-part-name">3 Noncompliance</span> <a href="iv.html">Instrumental variables</a> <a href="principal-strata.html">Principal strata</a></span>
+    <span class="nav-part"><span class="nav-part-name">4 Regression discontinuity</span> <a href="rd.html">Sharp design</a></span>
+    <span class="nav-part"><span class="nav-part-name">5 Difference-in-differences</span> <a href="did.html">Parallel trends</a> <a href="staggered.html">Staggered adoption</a> <a href="event-study.html">Event study</a></span>
+    <span class="nav-part"><span class="nav-part-name">6 Prediction and decisions</span> <a href="selective-labels.html">Selective labels</a> <a href="uplift.html">Uplift targeting</a></span>
+  </nav>
+</div></header>
+
+<main id="main">
+<p class="kicker">1.1 Randomized experiments</p>
+<h1>Randomization inference: an exact test for a small experiment</h1>
+<p class="lede">A small experiment has too few units for the usual large-sample formulas, so randomization inference uses only the way the treatment was assigned. This page shows how the test works and how the choice of test statistic changes the answer. It also shows how a series of tests gives a confidence interval.</p>
+
+<section class="prose" aria-labelledby="brief">
+<h2 id="brief">In brief</h2>
+<p>An online shop tests a new product page with 10 customers. A computer picks 5 of them at random to see the new page, and the other 5 see the old page. The test asks whether the new page changes the spending of any customer in the next month.</p>
+<ul>
+<li>A <strong>test statistic</strong> is one number computed from the data, for example the difference in means between the two groups.</li>
+<li>The <strong>randomization distribution</strong> is the set of values of the statistic for all 252 possible assignments. Every outcome stays fixed, as the <strong>sharp null hypothesis</strong> of no effect for any customer says.</li>
+<li>The <strong>p-value</strong> is the share of these values that are at least as extreme as the value for the actual assignment. The test rejects the sharp null at the 5% level if the p-value is 0.05 or less.</li>
+<li>The <strong>95% confidence interval</strong> from inverting the test is the set of constant effects that the test does not reject at the 5% level. A constant effect is the same for every customer.</li>
+</ul>
+<p>Move the sliders and watch these numbers. The explanation below the simulation gives the reasons.</p>
+</section>
+
+<section aria-labelledby="try">
+<h2 id="try">Try it</h2>
+<p class="prose">The simulation has 10 customers at first. The sliders set the true effect of the new page, the extra spending of a large customer, and the number of customers. Two menus set the test statistic and the kind of test.</p>
+<details class="symbols" id="ri-sim-details">
+<summary>How the simulation makes the data</summary>
+<p>Without the new page, the spending of each customer is drawn at random around 40 dollars. Customer 1 is a large customer: the large-customer slider adds an amount to the spending of this customer with either page. The new page adds the true effect to the spending of every customer. The simulation keeps both potential outcomes of every customer, so it knows the true effect.</p>
+</details>
+<div class="sim">
+<div class="sim-grid">
+<form id="ri-controls" class="controls" aria-label="Simulation settings">
+  <div class="control">
+    <label for="ri-effect">True effect of the new page (dollars) <output for="ri-effect"></output></label>
+    <input type="range" id="ri-effect" name="effect" min="-10" max="30" step="1" value="15">
+    <p class="hint">The same for every customer.</p>
+  </div>
+  <div class="control">
+    <label for="ri-outlier">Extra spending of the large customer (dollars) <output for="ri-outlier"></output></label>
+    <input type="range" id="ri-outlier" name="outlier" min="0" max="300" step="10" value="0">
+    <p class="hint">Customer 1 spends this much more with either page. In Sample 1, this customer sees the old page.</p>
+  </div>
+  <div class="control">
+    <label for="ri-n">Number of customers <output for="ri-n"></output></label>
+    <input type="range" id="ri-n" name="n" min="6" max="20" step="2" value="10" data-format="int">
+    <p class="hint">Half of them see the new page. Up to 14 customers, the test uses every assignment. Above 14, it uses the actual assignment and 1,999 random assignments.</p>
+  </div>
+  <div class="control">
+    <label for="ri-stat">Test statistic</label>
+    <select id="ri-stat" name="statistic">
+      <option value="mean" selected>Difference in means</option>
+      <option value="median">Difference in medians</option>
+      <option value="rank">Difference in mean ranks</option>
+    </select>
+  </div>
+  <div class="control">
+    <label for="ri-alt">Kind of test</label>
+    <select id="ri-alt" name="alternative">
+      <option value="two" selected>Two-sided: any change in spending</option>
+      <option value="greater">One-sided: higher spending</option>
+    </select>
+  </div>
+  <div class="button-row">
+    <button type="button" id="ri-new">Draw a new sample</button>
+    <button type="reset">Reset</button>
+    <span class="sample-label" id="ri-sample"></span>
+  </div>
+</form>
+<div class="chart-stack">
+<figure class="chart">
+  <p class="chart-title">The data</p>
+  <ul class="legend" id="ri-data-legend"></ul>
+  <svg id="ri-data"></svg>
+  <figcaption>Each dot is one customer. The gray vertical lines mark the mean spending of each group. Hover over a dot to see its value.</figcaption>
+</figure>
+<figure class="chart">
+  <p class="chart-title">The randomization distribution under the sharp null of no effect</p>
+  <ul class="legend" id="ri-hist-legend"></ul>
+  <svg id="ri-hist"></svg>
+  <figcaption>Each bar counts the assignments whose statistic falls in its range, with the outcomes held fixed. The blue parts are at least as extreme as the value for the actual assignment, so they count in the p-value. The dark vertical line marks the value for the actual assignment. For the two-sided test, the light vertical line marks the same value with the opposite sign. Hover over a bar to see its counts.</figcaption>
+</figure>
+<figure class="chart">
+  <p class="chart-title">Inverting the test: one p-value for each constant effect</p>
+  <ul class="legend" id="ri-curve-legend"></ul>
+  <svg id="ri-curve"></svg>
+  <figcaption>The blue line shows the two-sided p-value of the sharp null that the effect is &tau;<sub>0</sub> for every customer. It does so for each &tau;<sub>0</sub> on the horizontal axis. The shaded band marks the values that the test does not reject at the 5% level. The light horizontal line marks a p-value of 0.05. The dot marks the middle of the effects with the highest p-value, and the dashed line marks the true effect. Hover over the dot to see its values.</figcaption>
+</figure>
+</div>
+</div>
+
+<div class="results-wrap">
+<table class="results">
+  <caption>The three test statistics in this sample</caption>
+  <thead><tr><th scope="col">Test statistic</th><th scope="col">Value for the actual assignment</th><th scope="col">p-value</th><th scope="col">Rejections at 5% if the sharp null were true</th></tr></thead>
+  <tbody>
+    <tr id="ri-row-mean"><td>Difference in means (dollars)</td><td id="ri-mean-obs"></td><td id="ri-mean-p"></td><td id="ri-mean-size"></td></tr>
+    <tr id="ri-row-median"><td>Difference in medians (dollars)</td><td id="ri-median-obs"></td><td id="ri-median-p"></td><td id="ri-median-size"></td></tr>
+    <tr id="ri-row-rank"><td>Difference in mean ranks</td><td id="ri-rank-obs"></td><td id="ri-rank-p"></td><td id="ri-rank-size"></td></tr>
+  </tbody>
+</table>
+<p class="hint">The bold row is the chosen statistic, and the p-values use the chosen kind of test. A real study chooses one statistic before it sees the outcomes. The table shows all three only to compare them. The last column assumes that the new page changes the spending of no customer. Then each customer would spend the observed amount under any assignment. The column shows the share of the assignments that the test uses in which the test would then give a p-value at or below 0.05.</p>
+</div>
+<dl class="readout">
+  <div><dt>Possible assignments</dt><dd id="ri-r-K"></dd></div>
+  <div><dt>Assignments that the test uses</dt><dd id="ri-r-used"></dd></div>
+  <div><dt>Assignments at least as extreme as the actual one</dt><dd id="ri-r-count"></dd></div>
+  <div><dt>p-value</dt><dd id="ri-r-p"></dd></div>
+  <div><dt>Smallest possible p-value</dt><dd id="ri-r-pmin"></dd></div>
+  <div><dt>95% confidence interval from inverting the test (dollars)</dt><dd id="ri-r-ci"></dd></div>
+  <div><dt>Middle of the effects with the highest p-value (dollars)</dt><dd id="ri-r-est"></dd></div>
+  <div><dt>True effect (dollars)</dt><dd id="ri-r-true"></dd></div>
+</dl>
+<p class="hint">The confidence interval always uses the two-sided test of the chosen statistic. Its ends are values of &tau;<sub>0</sub>, so they are in dollars for every statistic. The p-value, the 95% confidence interval, and other terms are defined in the <a href="index.html#terms">key terms</a> on the home page.</p>
+</div>
+<noscript><p class="noscript">The simulation needs JavaScript. The text on this page still explains the method.</p></noscript>
+</section>
+
+<aside class="notice" aria-labelledby="notice">
+<h2 id="notice">What to notice</h2>
+<ul>
+  <li>Look at the histogram at the default settings. The 252 values of the difference in means form a hill around 0. Only 4 assignments, 2 at each end, are at least as extreme as the actual value of 15.21, so the p-value is 4/252, or 0.016. Set the true effect to 0 and draw new samples. The dark line now falls inside the hill in most samples, and the p-value is above 0.05 in most samples.</li>
+  <li>Press Reset to return to Sample 1 and the default settings, then move the large-customer slider to 200. In Sample 1 this customer sees the old page. The histogram of the difference in means splits into two humps. One is for the assignments that put the large customer in the treated group, and one is for the rest. The value for the actual assignment drops to &minus;24.79, and its p-value rises to 0.99. The p-values of the other two statistics rise less: to 0.12 for the difference in medians and 0.22 for the difference in mean ranks.</li>
+  <li>Keep the large customer at 200 and look at the bottom chart. The 95% confidence interval from the difference in means now runs from &minus;92.87 to 24.33. With the large customer at 0, it ran from 4.71 to 24.33, so it is about six times as wide now. Choose the difference in mean ranks: its interval reaches even lower, to &minus;183.97.</li>
+  <li>Choose the difference in mean ranks and move the effect slider or the large-customer slider. The heights of the bars do not change, because the ranks of the 10 customers are always 1 to 10. Only the vertical lines and the blue parts of the bars move.</li>
+  <li>Set the number of customers to 6. Only 20 assignments exist. With the two-sided test, the smallest possible p-value is 0.10, so no result can reach the 5% level, and the confidence interval contains every value. The last column of the table shows 0.0% for all three statistics. Choose the one-sided test: the smallest possible p-value falls to 0.05. For any setting, the last column never goes above 5%.</li>
+</ul>
+</aside>
+
+<section class="prose" aria-labelledby="idea">
+<h2 id="idea">The idea</h2>
+<p>An online shop tests a new product page with 10 customers. A computer picks 5 of the 10 at random to see the new page, and the other 5 see the old page. We call the first set of customers the treated group and the second set the comparison group. The outcome is the spending of each customer in the next month.</p>
+<p>Randomization inference needs no large-sample approximation. It uses only the rule that assigned the page (Imbens and Rubin 2015, ch. 5).</p>
+<p>A <strong>null hypothesis</strong> is the claim that a test checks against the data. This test starts from the null hypothesis of Fisher that the treatment has no effect for any customer. Write \(Y_i(1)\) for the spending of customer i with the new page and \(Y_i(0)\) for the spending with the old page. These are the potential outcomes of customer i.</p>
+<p>The null hypothesis says that \(Y_i(1) = Y_i(0)\) for every customer i. It is called the <strong>sharp null hypothesis</strong>, because it fixes both potential outcomes of every customer (Imbens and Rubin 2015, ch. 5). Then each customer would spend the same amount with either page, so we know what the data would show under any other assignment.</p>
+<p>The sharp null says more than a zero average effect. Suppose that the new page raises the spending of one customer by 5 dollars and lowers that of another by 5 dollars. Then the average effect is zero, but the sharp null is false. So a rejection of the sharp null is evidence that the new page changes the spending of at least one customer. The test is not built to test a zero average effect (Ding 2024, sec. 8.1).</p>
+<p>The test has four steps (Imbens and Rubin 2015, ch. 5):</p>
+<ol>
+  <li>Choose a <strong>test statistic</strong> before looking at the outcomes. A test statistic is one number computed from the data. An example is the mean spending of the treated group minus the mean spending of the comparison group.</li>
+  <li>Compute the statistic for the actual assignment.</li>
+  <li>Compute it again for every other assignment that the same rule could have produced. Keep the outcome of every customer fixed, as the sharp null says. With 10 customers and 5 treated, there are 252 assignments. Their 252 values form the <strong>randomization distribution</strong>.</li>
+  <li>Compute the <strong>p-value</strong>: the share of the 252 values that are at least as extreme as the value for the actual assignment.</li>
+</ol>
+<p>This p-value is exact. The test rejects the null hypothesis at the 5% level if the p-value is 0.05 or less. A two-sided test compares absolute values, so large values of either sign count.</p>
+<details class="symbols" id="ri-test-symbols">
+<summary>Notation for the test</summary>
+<p>\(D_i\) is 1 if customer \(i\) sees the new page and 0 otherwise. The design gives the new page to \(n_1\) of \(n\) customers. All \(K = C(n, n_1)\) assignments \(d_1, \ldots, d_K\) are equally likely. \(T(d, y)\) is the test statistic for assignment \(d\) and outcomes \(y\). Under the sharp null of no effect, the observed outcomes \(y\) stay the same under every assignment.</p>
+</details>
+<p>In symbols, the one-sided p-value is</p>
+<p class="formula">\[p = \frac{1}{K} \times (\text{number of } k \text{ with } T(d_k, y) \ge T(D, y))\]</p>
+<p>The two-sided p-value uses \(|T|\) in place of \(T\).</p>
+<details class="symbols" id="ri-pmin-details">
+<summary>The smallest possible p-value</summary>
+<p>The actual assignment is one of the 252, so the p-value is never below 1/252. When both groups have the same size, every assignment has a mirror image in which the two groups change places. The mirror image has the same absolute value, so the smallest two-sided p-value is at least 2/252. For the difference in means it is exactly 2/252. With 6 customers, it is at least 2/20, or 0.10, so the test can never reject at the 5% level.</p>
+</details>
+<p>If the researcher chooses the test statistic before seeing the outcomes, the test is valid. If the sharp null is true, the test then rejects it at the 5% level in at most 5% of the assignments (Ding 2024, ch. 3). A researcher who tries several statistics and reports the smallest p-value does not have a valid test (Imbens and Rubin 2015, ch. 5).</p>
+<p>The choice of statistic still matters, because it changes the <strong>power</strong> of the test. The power is the probability that the test rejects the null when the null is false. A few large values can move the difference in means by a large amount. They move the difference in medians and the difference in mean ranks less. Ranks order the customers by spending, from 1 for the lowest to 10 for the highest (Imbens and Rubin 2015, ch. 5; Cunningham 2021, ch. 4). No statistic has the most power in every situation.</p>
+<p>The same steps also test the sharp null of a constant effect. This null says that \(Y_i(1) = Y_i(0) + \tau_0\) for every customer, for a chosen number \(\tau_0\). Subtract \(\tau_0\) from the outcome of each treated customer. Under this null, the result is \(Y_i(0)\) for every customer, so the test of no effect applies.</p>
+<p>In symbols, the test of the sharp null \(Y_i(1) = Y_i(0) + \tau_0\) uses the adjusted outcomes \(y_i - D_i \tau_0\) in place of \(y\).</p>
+<p>Repeat the test for many values of \(\tau_0\). The values that the test does not reject at the 5% level form a 95% confidence interval. This method is called inverting the test (Imbens and Rubin 2015, ch. 5).</p>
+<p>In symbols, the 95% confidence interval is the set of all \(\tau_0\) with a two-sided p-value above 0.05.</p>
+<p>The interval assumes that every customer has the same effect. If the effects differ across customers, the interval need not contain the average effect 95% of the time (Ding 2024, ch. 3 and sec. 8.1).</p>
+<p>Module 5.3 uses the same logic for dates: it ranks the estimate on the policy date among the estimates on dates when nothing happened.</p>
+<details class="symbols" id="ri-large-details">
+<summary>Larger experiments: random draws of assignments</summary>
+<p>With 100 customers and 50 treated, the number of assignments has 30 digits. Then a computer draws many assignments at random, for example 10,000. The p-value is the share of these draws that are at least as extreme as the actual assignment (Imbens and Rubin 2015, ch. 5). If the actual assignment counts as one of the draws, the p-value is never 0, and the test stays valid (Ding 2024, ch. 3).</p>
+</details>
+</section>
+
+<section class="refs prose" aria-labelledby="refs">
+<h2 id="refs">References</h2>
+<ol id="ri-refs">
+  <li>Cunningham, S. (2021). <cite>Causal inference: The mixtape</cite>. Yale University Press. Chapter 4, Potential Outcomes Causal Model. <a href="https://doi.org/10.2307/j.ctv1c29t27">https://doi.org/10.2307/j.ctv1c29t27</a>. Free online first edition: <a href="https://mixtape-1ed.netlify.app/04-potential_outcomes.html#randomization-inference">chapter 4, section 4.2</a>.</li>
+  <li>Ding, P. (2024). <cite>A first course in causal inference</cite>. Chapman &amp; Hall/CRC. Chapter 3, The Completely Randomized Experiment and the Fisher Randomization Test, and section 8.1, Testing Strong and Weak Null Hypotheses in the CRE. <a href="https://doi.org/10.1201/9781003484080">https://doi.org/10.1201/9781003484080</a>. Free author version: <a href="https://arxiv.org/abs/2305.18793">arXiv:2305.18793</a>.</li>
+  <li>Imbens, G. W., &amp; Rubin, D. B. (2015). <cite>Causal inference for statistics, social, and biomedical sciences: An introduction</cite>. Cambridge University Press. Chapter 5, Fisher&apos;s Exact P-Values for Completely Randomized Experiments. <a href="https://doi.org/10.1017/CBO9781139025751">https://doi.org/10.1017/CBO9781139025751</a></li>
+</ol>
+</section>
+
+<nav class="pager" aria-label="Module pages">
+  <a href="index.html">Home</a>
+  <a href="neyman.html">Next: 1.2 Neyman variance and blocking</a>
+</nav>
+</main>
+
+<footer class="site-footer"><div class="inner">
+<p>All data on this site are simulated in your browser.</p>
+<p>Made by <a href="https://j1yoo.github.io/">Jaewon Yoo</a>, National Tsing Hua University. Code: <a href="https://polyformproject.org/licenses/noncommercial/1.0.0">PolyForm Noncommercial 1.0.0</a>. Text: <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/">Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 (CC BY-NC-ND 4.0)</a>.</p>
+</div></footer>
+<script src="assets/js/core/analytics.js"></script>
+<script src="assets/vendor/katex/katex.min.js"></script>
+<script src="assets/vendor/katex/auto-render.min.js"></script>
+<script src="assets/js/core/math.js"></script>
+<script src="assets/js/core/rng.js"></script>
+<script src="assets/js/core/stats.js"></script>
+<script src="assets/js/core/plot.js"></script>
+<script src="assets/js/core/ui.js"></script>
+<script src="assets/js/sims/ri.js"></script>
+<script src="assets/js/pages/ri-page.js"></script>
+</body>
+</html>

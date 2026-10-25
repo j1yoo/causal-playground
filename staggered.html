@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Staggered adoption | Causal Playground</title>
+<meta name="description" content="Interactive simulation: when a two-way fixed effects regression gives a misleading average effect under staggered adoption, and what group-time estimators do instead.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/vendor/katex/katex.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+  /* Page styles: the controls stay in view next to the stacked charts (shared class chart-stack). */
+  table.results .st-text { text-align: left; }
+  @media (min-width: 821px) { #st-controls { position: sticky; top: 12px; } }
+  /* On a phone, the decomposition table hides the column of periods (the list in The idea gives them),
+     and its first column may shrink, so that the table fits. */
+  @media (max-width: 560px) {
+    #st-decomp td:first-child { min-width: 0; }
+    .st-bacon th:nth-child(2), .st-bacon td:nth-child(2) { display: none; }
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><div class="inner">
+  <a class="site-title" href="index.html">Causal Playground</a>
+  <nav class="site-nav" aria-label="Modules">
+    <span class="nav-part"><span class="nav-part-name">1 Randomized experiments</span> <a href="randomization-inference.html">Randomization inference</a> <a href="neyman.html">Neyman and blocking</a></span>
+    <span class="nav-part"><span class="nav-part-name">2 Observational studies</span> <a href="controls.html">Regression and controls</a></span>
+    <span class="nav-part"><span class="nav-part-name">3 Noncompliance</span> <a href="iv.html">Instrumental variables</a> <a href="principal-strata.html">Principal strata</a></span>
+    <span class="nav-part"><span class="nav-part-name">4 Regression discontinuity</span> <a href="rd.html">Sharp design</a></span>
+    <span class="nav-part"><span class="nav-part-name">5 Difference-in-differences</span> <a href="did.html">Parallel trends</a> <a href="staggered.html" aria-current="page">Staggered adoption</a> <a href="event-study.html">Event study</a></span>
+    <span class="nav-part"><span class="nav-part-name">6 Prediction and decisions</span> <a href="selective-labels.html">Selective labels</a> <a href="uplift.html">Uplift targeting</a></span>
+  </nav>
+</div></header>
+
+<main id="main">
+<p class="kicker">5.2 Difference-in-differences</p>
+<h1>Staggered adoption: when two-way fixed effects mislead</h1>
+<p class="lede">In staggered adoption, groups of units start a policy in different periods. This page shows when the usual regression for this design gives a misleading average effect. It also shows a method that first estimates a separate effect for each group and each period.</p>
+
+<section class="prose" aria-labelledby="brief">
+<h2 id="brief">In brief</h2>
+<p>A retail chain starts a new policy in its stores in waves. An early group of stores adopts the policy in period 4, and a late group adopts it in period 7. A third group, the never group, never adopts it.</p>
+<ul>
+<li>A two-way fixed effects (TWFE) regression has a separate intercept for each store and for each period, and a treatment indicator for the policy. The coefficient on this indicator is the <strong>TWFE estimate</strong>.</li>
+<li>The <strong>true average effect over all treated store-periods</strong> averages the effect over every store in every period with the policy. Only the simulation knows it.</li>
+<li>Each <strong>comparison</strong> in the decomposition chart is a difference-in-differences with two groups and two windows of time. The TWFE estimate is a weighted average of these comparisons.</li>
+<li>The Callaway and Sant'Anna method first estimates the average effect of each group in each period, the <strong>group-time effect</strong>. It compares each group only with stores that do not have the policy. The <strong>Callaway and Sant'Anna estimate</strong> averages these effects, weighted by group size.</li>
+</ul>
+<p>Move the sliders and watch these numbers. The explanation below the simulation gives the reasons.</p>
+</section>
+
+<section aria-labelledby="try">
+<h2 id="try">Try it</h2>
+<p class="prose">The simulation has 40 stores in each group. The sliders set the effect in the first period, its change per period, an extra effect in the early group, and the noise. A box can remove the stores that never adopt.</p>
+<details class="symbols" id="st-sim-details">
+<summary>How the simulation makes the data</summary>
+<p>Each store has its own level of the outcome. The outcome of each store also moves up and down at random from period to period. This random part is the noise.</p>
+<p>Without the policy and apart from the noise, all stores have the same changes from one period to the next. So parallel trends holds for every pair of groups. Any bias on this page comes from the way an estimator uses the data, not from a failure of parallel trends.</p>
+<p>The simulation also keeps the outcome that each store would have without the policy, so it knows every true effect. The early group has 280 treated store-periods (40 stores in periods 4 to 10). The late group has 160 (40 stores in periods 7 to 10).</p>
+</details>
+<div class="sim">
+<div class="sim-grid">
+<form id="st-controls" class="controls" aria-label="Simulation settings">
+  <div class="control">
+    <label for="st-base">Effect in the first period of the policy <output for="st-base"></output></label>
+    <input type="range" id="st-base" name="base" min="-1" max="3" step="0.1" value="2">
+  </div>
+  <div class="control">
+    <label for="st-growth">Change in the effect per period after adoption <output for="st-growth"></output></label>
+    <input type="range" id="st-growth" name="growth" min="-0.5" max="1" step="0.05" value="0">
+    <p class="hint">With a positive value, the effect grows in each period after a store adopts.</p>
+  </div>
+  <div class="control">
+    <label for="st-extra">Extra effect in the early group <output for="st-extra"></output></label>
+    <input type="range" id="st-extra" name="earlyExtra" min="-2" max="2" step="0.1" value="0">
+    <p class="hint">The simulation adds this amount to the effect in every early-group store in every period with the policy.</p>
+  </div>
+  <div class="control check">
+    <label for="st-never"><input type="checkbox" id="st-never" name="neverGroup" checked>Include stores that never adopt</label>
+    <p class="hint">Without the never group, every store has the policy from period 7 on.</p>
+  </div>
+  <div class="control">
+    <label for="st-noise">Noise (standard deviation) <output for="st-noise"></output></label>
+    <input type="range" id="st-noise" name="noise" min="0" max="2" step="0.1" value="0.5">
+  </div>
+  <div class="button-row">
+    <button type="button" id="st-new">Draw a new sample</button>
+    <button type="reset">Reset</button>
+    <span class="sample-label" id="st-sample"></span>
+  </div>
+</form>
+
+<div class="chart-stack">
+<figure class="chart">
+  <ul class="legend" id="st-legend-a"></ul>
+  <svg id="st-chart-a"></svg>
+  <figcaption>Lines show the average outcome of each group. The vertical lines mark the first period with the policy: period 4 for the early group and period 7 for the late group. Hover over a dot to see its value.</figcaption>
+</figure>
+<dl class="readout">
+  <div><dt>TWFE estimate</dt><dd id="st-r-twfe"></dd></div>
+  <div><dt>True average effect over all treated store-periods</dt><dd id="st-r-true"></dd></div>
+  <div><dt>TWFE estimate minus true effect</dt><dd id="st-r-btwfe"></dd></div>
+</dl>
+<dl class="readout">
+  <div><dt>Callaway and Sant'Anna estimate (simple weighted average)</dt><dd id="st-r-cs"></dd></div>
+  <div><dt>True average effect over the store-periods that the method can estimate</dt><dd id="st-r-truecs"></dd></div>
+  <div><dt>Callaway and Sant'Anna estimate minus true effect</dt><dd id="st-r-bcs"></dd></div>
+</dl>
+<p class="readout-note">The page compares the TWFE estimate with the true average effect over all treated store-periods. It compares the Callaway and Sant'Anna estimate with the true average effect over the store-periods that this method can estimate. <span id="st-cover"></span> In one sample, each difference is the bias plus the sampling error. Draw new samples, or set the noise to 0, to see the bias. The <a href="index.html#terms">key terms</a> on the home page define bias and sampling error. The page rounds each number to two decimals, so a difference of two printed numbers can be off by 0.01.</p>
+
+<h3>Inside the TWFE estimate: the decomposition chart</h3>
+<figure class="chart">
+  <ul class="legend" id="st-legend-b"></ul>
+  <svg id="st-chart-b"></svg>
+  <figcaption>Each dot is one comparison of two groups. Its position from left to right shows its weight in the TWFE estimate. Its height shows its estimate. The solid gray line is the TWFE estimate, which is the weighted average of the dots. The dashed line is the true average effect over all treated store-periods. Hover over a dot to see its numbers.</figcaption>
+</figure>
+<div class="results-wrap">
+<table class="results st-bacon">
+  <caption>The Goodman-Bacon decomposition of the TWFE estimate</caption>
+  <thead><tr><th scope="col">Comparison</th><th scope="col">Periods used</th><th scope="col">Weight</th><th scope="col">Estimate</th><th scope="col">Weight &times; estimate</th></tr></thead>
+  <tbody id="st-decomp"></tbody>
+</table>
+<p class="readout-note">In the sum row, the weights add to 1, and the last column adds to the TWFE estimate. The table rounds each number. So a sum or a product of printed numbers can differ from the printed result in the last digit.</p>
+</div>
+
+<h3>Effects by periods since adoption</h3>
+<figure class="chart">
+  <ul class="legend" id="st-legend-c"></ul>
+  <svg id="st-chart-c"></svg>
+  <figcaption>Dots show the Callaway and Sant'Anna average of the group-time effects at each number of periods since adoption. The dashed line shows the true values with the same group weights. The groups in each average change. With the never group, the late group appears only up to 3 periods after adoption, because it adopts in period 7. Without the never group, only the early group appears. A shaded area then marks the periods with no estimate.</figcaption>
+</figure>
+<div class="results-wrap">
+<table class="results">
+  <caption>Average effect by periods since adoption</caption>
+  <thead><tr><th scope="col">Periods since adoption</th><th scope="col" class="st-text">Groups in the average</th><th scope="col">Callaway and Sant'Anna estimate</th><th scope="col">True value</th></tr></thead>
+  <tbody id="st-event"></tbody>
+</table>
+<p class="readout-note">The chart of effects by periods since adoption shows only periods after adoption. Each group-time effect in it measures the change from period \(g - 1\), the last period before adoption (Callaway and Sant'Anna 2021). We call period \(g - 1\) the base period. Software for group-time estimators can also show periods before adoption. Those estimates can use a different base period than the estimates after adoption. So check which base period a program uses before you compare its chart with an event-study chart, such as the chart in <a href="event-study.html">Module 5.3</a>.</p>
+</div>
+</div>
+</div>
+</div>
+<noscript><p class="noscript">The simulation needs JavaScript. The text on this page still explains the method.</p></noscript>
+</section>
+
+<aside class="notice" aria-labelledby="notice">
+<h2 id="notice">What to notice</h2>
+<ul>
+  <li>Keep the default settings. The effect is 2 in every store and in every period with the policy. Set the noise to 0: all four comparisons, the TWFE estimate, and the Callaway and Sant'Anna estimate equal 2.00. With one constant effect, the methods agree. Set the noise back to 0.5 and draw new samples. The estimates now move around 2 from sample to sample.</li>
+  <li>Press Reset and raise the change in the effect per period to 0.5. In the decomposition chart, the dashed line rises to 3.23, the new true average effect. The orange dot, late vs early, falls to about 1, and the TWFE estimate is now about 0.6 below the true average. In the chart of effects by periods since adoption, the dots follow the dashed line. The Callaway and Sant'Anna estimate minus its true average keeps the value that it had before the move. Only the noise creates this difference.</li>
+  <li>Set the effect in the first period to 1 and the change per period to 1. Every true effect is now at least 1. Yet the late vs early comparison is negative, about &minus;1. Its comparison group, the early group, already has the policy. The effect in the early group grows by 1 in each period. The comparison subtracts this growth from the effect of the late group.</li>
+  <li>Press Reset, set the change per period to 0.5, and clear the box for stores that never adopt. Only two comparisons are left, and late vs early now has the larger weight, 0.571. The TWFE estimate is now about 1.6 below the true average. Callaway and Sant'Anna can now estimate only the early group in periods 4 to 6. So the chart of effects by periods since adoption shows estimates only for 0 to 2 periods. The true average for this method falls to 2.50, the average over 120 store-periods.</li>
+  <li>Press Reset, set the extra effect in the early group to 2: the effect still does not change over time, so no comparison is biased. Early vs never and early vs late are near 4, and the other two comparisons are near 2. Yet the TWFE estimate is about 0.4 below the true average: the two comparisons in which the early group adopts have weights 0.318 and 0.136. Together they have less than half of the total weight, but the early group has 280 of the 440 treated store-periods, more than half. In the chart of effects by periods since adoption, the dashed line steps up from 3 to 4 after 3 periods. There the late group leaves the average.</li>
+</ul>
+</aside>
+
+<section class="prose" aria-labelledby="idea">
+<h2 id="idea">The idea</h2>
+<p>A retail chain starts a new policy in its stores in waves. We say that a store adopts the policy when it starts the policy. An early group of stores adopts the policy in period 4. A late group adopts it in period 7. A third group never adopts it. We call this group the never group.</p>
+<p>Once a store has the policy, it keeps it. Huntington-Klein (2025, ch. 18) calls this setting a rollout design.</p>
+<p>The usual estimate comes from a <strong>two-way fixed effects (TWFE)</strong> regression. The regression has a separate intercept for each store (store fixed effects) and for each period (period fixed effects). It also has a treatment indicator, D. D is 1 for a store in a period with the policy and 0 otherwise. The coefficient on D is the TWFE estimate.</p>
+<p>The store fixed effects absorb every difference between stores that does not change over time, for example a difference in location or in management style. The period fixed effects absorb every change that hits all stores by the same amount in the same period. The season is one example (Huntington-Klein 2025, ch. 16).</p>
+<p>Goodman-Bacon (2021, Theorem 1) shows that the TWFE estimate is a weighted average of simple comparisons. Each <strong>comparison</strong> is a difference-in-differences with two groups and two windows of time. It takes the change in the mean outcome of a group that adopts between the two windows. Then it subtracts the same change in a <strong>comparison group</strong>, a group whose policy status does not change between the windows. Many texts call this group the control group.</p>
+<p>With three groups there are four comparisons. Each label has the form A vs B (A versus B). A is the group that adopts, and B is the comparison group:</p>
+<ul>
+  <li><strong>Early vs never</strong> uses periods 1 to 3 and 4 to 10.</li>
+  <li><strong>Late vs never</strong> uses periods 1 to 6 and 7 to 10.</li>
+  <li><strong>Early vs late</strong> uses periods 1 to 3 and 4 to 6. In these periods, the late group does not have the policy yet.</li>
+  <li><strong>Late vs early</strong> uses periods 4 to 6 and 7 to 10. In these periods, the early group already has the policy.</li>
+</ul>
+<p>The same group can play both roles. In early vs late, the late group is the comparison group. In late vs early, the late group is the group that adopts.</p>
+<details class="symbols" id="st-comparisons-symbols">
+<summary>The comparisons in symbols</summary>
+<p>Let \(T\) be the last period (here \(T = 10\)). Let \(a_k\) be the first period with the policy in group \(k\), and let \(U\) be the never group. The decomposition assumes a balanced panel, with data on every store in every period. It also assumes that no group has the policy in period 1 (Goodman-Bacon 2021, Theorem 1).</p>
+<p>Write \(\bar{y}_j(W)\) for the mean outcome of group \(j\) over the periods in window \(W\). \(\text{PRE}(k)\) is the periods before \(a_k\). \(\text{POST}(k)\) is the periods \(a_k\) to \(T\). For an earlier group \(k\) and a later group \(l\), \(\text{MID}(k,l)\) is the periods \(a_k\) to \(a_l - 1\). The three kinds of comparison are:</p>
+<p class="formula">\[\begin{aligned} b_{kU} = {} & [\bar{y}_k(\text{POST}(k)) - \bar{y}_k(\text{PRE}(k))] \\ & - [\bar{y}_U(\text{POST}(k)) - \bar{y}_U(\text{PRE}(k))] \\ b^k_{kl} = {} & [\bar{y}_k(\text{MID}(k,l)) - \bar{y}_k(\text{PRE}(k))] \\ & - [\bar{y}_l(\text{MID}(k,l)) - \bar{y}_l(\text{PRE}(k))] \\ b^l_{kl} = {} & [\bar{y}_l(\text{POST}(l)) - \bar{y}_l(\text{MID}(k,l))] \\ & - [\bar{y}_k(\text{POST}(l)) - \bar{y}_k(\text{MID}(k,l))] \end{aligned}\]</p>
+</details>
+<p>The weights are never negative, and they add up to 1. They depend on the sizes of the groups and on when each group adopts. The panel is the data on all stores in all periods, here periods 1 to 10. Groups that adopt near the middle of the panel get more weight (Goodman-Bacon 2021).</p>
+<details class="symbols" id="st-weights-symbols">
+<summary>The weights in symbols</summary>
+<p>Let \(n_k\) be the share of stores in group \(k\). Let \(\bar{D}_k = (T - a_k + 1)/T\) be the share of periods in which group \(k\) has the policy. This share is the mean of \(D\) in group \(k\). Let \(V\) be the mean of the squared values of \(D\) after we remove the store means and the period means from \(D\). After some algebra, the weights in Goodman-Bacon (2021, Theorem 1) are:</p>
+<p class="formula">\[\begin{aligned} s_{kU} &= \frac{n_k n_U \bar{D}_k(1 - \bar{D}_k)}{V} \\ s^k_{kl} &= \frac{n_k n_l (\bar{D}_k - \bar{D}_l)(1 - \bar{D}_k)}{V} \\ s^l_{kl} &= \frac{n_k n_l \bar{D}_l(\bar{D}_k - \bar{D}_l)}{V} \end{aligned}\]</p>
+<p>The TWFE estimate is the sum of each weight times its comparison.</p>
+</details>
+<p>The problem is in the last kind of comparison. Its comparison group already has the policy. Suppose that the effect of the policy grows over time. Then the outcome of the comparison group rises for that reason too. The comparison subtracts this rise from the effect of the late group. So an effect that changes over time biases this comparison, and through it the TWFE estimate (Goodman-Bacon 2021).</p>
+<p>Huntington-Klein (2025, ch. 18) puts the problem this way: the regression uses groups that already have the policy as a comparison group.</p>
+<details class="symbols" id="st-minus-sign-details">
+<summary>Effects with a minus sign, and negative weights</summary>
+<p>No comparison has a negative weight. Yet when effects change over time, some effects still enter the TWFE estimate with a minus sign. The reason lies in each comparison whose comparison group already has the policy. Such a comparison subtracts the change in the effect of that group between the two windows (Goodman-Bacon 2021).</p>
+<p>In symbols, write \(\text{ATT}_j(W)\) for the average effect in group \(j\) over the periods in window \(W\). If parallel trends holds, the comparison \(b^l_{kl}\) (late vs early on this page) estimates:</p>
+<p class="formula">\[\begin{aligned} & \text{ATT}_l(\text{POST}(l)) \\ & - [\text{ATT}_k(\text{POST}(l)) - \text{ATT}_k(\text{MID}(k,l))] \end{aligned}\]</p>
+<p>The change in the effect of group \(k\) enters with a minus sign (Goodman-Bacon 2021).</p>
+<p>De Chaisemartin and D&apos;Haultf&oelig;uille (2020) write the TWFE estimate in another way. They write it as a weighted sum of the effects in each group and period with the policy. Some of these weights can be negative. Then the TWFE estimate can be negative when every effect is positive. They give such an example with two groups and three periods.</p>
+<p>The weights of de Chaisemartin and D&apos;Haultf&oelig;uille (2020) are weights on the effects in each group and period with the policy, not on the comparisons. So their weights are not the weights of the decomposition above.</p>
+</details>
+<details class="symbols" id="st-time-constant-details">
+<summary>When the effect does not change over time</summary>
+<p>A staggered design alone does not make TWFE biased. If the effect is one constant number, every comparison estimates that number, and so does TWFE. If the effect differs between groups but does not change over time, no comparison is biased. TWFE is then a weighted average of the group effects. These weights come from the weights of the comparisons. So they also give more weight to groups that adopt near the middle of the panel (Goodman-Bacon 2021).</p>
+<p>The average effect over all <strong>treated store-periods</strong> weights the groups in another way. Treated store-periods are the stores in the periods when they have the policy. This average weights each group by its number of treated store-periods. So it gives more weight to groups that adopt early, because these groups have the policy for more periods. For this reason, TWFE can differ from the average effect over all treated store-periods.</p>
+</details>
+<p>Callaway and Sant'Anna (2021) do not use stores that already have the policy as a comparison group. They first estimate a <strong>group-time average treatment effect</strong>, written ATT(g,t). Here ATT stands for average treatment effect on the treated (see the <a href="index.html#terms">key terms</a>). ATT(g,t) is the average effect in period t for the stores that adopt in period g.</p>
+<details class="symbols" id="st-group-time-symbols">
+<summary>The group-time effect in symbols</summary>
+<p>For Callaway and Sant'Anna (2021), let \(G\) be the first period with the policy for a store, and let \(g\) be one value of \(G\). So \(g\) plays the role of \(a_k\) above. Write \(Y_t(1)\) and \(Y_t(0)\) for the outcomes of a store in period \(t\) with and without the policy. Write \(Y_t\) for its observed outcome. \(E[\,\cdot\,]\) is an average over the population of stores, and a vertical bar means among.</p>
+<p>The group-time effect is \(\text{ATT}(g,t) = E[Y_t(1) - Y_t(0) \mid G = g]\).</p>
+</details>
+<p>Period \(g - 1\) is the last period before group g adopts. To estimate ATT(g,t), the method takes the change in the mean outcome of group g from period \(g - 1\) to period t. Then it subtracts the same change in a comparison group that does not have the policy in either period. On this page, the comparison group is the never group. Without a never group, the comparison group is the stores that have not adopted by period t.</p>
+<p>The method needs two assumptions. First, stores do not react to the policy before they adopt it. Second, the parallel trends assumption holds for group g and its comparison group. That is, without the policy, both mean outcomes would have the same change from period \(g - 1\) to period t (Callaway and Sant'Anna 2021).</p>
+<p>In symbols, with these two assumptions and no covariates, the group-time effect equals a difference of observed changes:</p>
+<p class="formula">\[\begin{aligned} \text{ATT}(g,t) = {} & E[Y_t - Y_{g-1} \mid G = g] \\ & - E[Y_t - Y_{g-1} \mid \text{comparison group}] \end{aligned}\]</p>
+<p>The comparison group is the never group, or the stores with \(G &gt; t\) if there is no never group.</p>
+<details class="symbols" id="st-no-never-details">
+<summary>Without a never group</summary>
+<p>Without a never group, the method runs out of stores for the comparison group. From period 7 on, every store has the policy. So the method can estimate the effects of the early group only in periods 4 to 6. It cannot estimate any effect of the late group (Callaway and Sant'Anna 2021). The decomposition of TWFE does not need a never group (Goodman-Bacon 2021).</p>
+</details>
+<p>Next, the method averages the group-time effects. This page shows <strong>the simple weighted average of the group-time effects</strong>. It weights each group-time effect by the size of its group. So it is the average effect over the treated store-periods that the method can estimate.</p>
+<p>In symbols, the simple weighted average gives each \(\text{ATT}(g,t)\) with \(t \ge g\) a weight proportional to \(P(G = g)\). Without a never group, this page uses only the \(\text{ATT}(g,t)\) that the method can estimate.</p>
+<details class="symbols" id="st-other-averages-details">
+<summary>Other averages of the group-time effects</summary>
+<p>The paper also proposes other summaries, including one that first averages within each group (Callaway and Sant'Anna 2021). The page also averages the group-time effects by the number of periods since adoption. The set of groups in that average changes with the number of periods.</p>
+<p>In symbols, the average by periods since adoption, \(e\), is:</p>
+<p class="formula">\[\begin{aligned} & \theta_{\text{es}}(e) = \sum_g 1\{g + e \le T\} \\ & \qquad P(G = g \mid G + e \le T) \, \text{ATT}(g, g + e) \end{aligned}\]</p>
+<p>Here \(1\{\cdot\}\) is 1 when the condition holds and 0 otherwise.</p>
+</details>
+<p>Before you report a TWFE estimate from a staggered design, check it in two steps. First, split the estimate into its comparisons, as the decomposition chart above does. Look at how much weight goes to comparisons whose comparison group already has the policy. Look also at how far their estimates are from the other estimates (Goodman-Bacon 2021). Second, estimate the group-time effects and average them (Callaway and Sant'Anna 2021).</p>
+<p>A large gap between the TWFE estimate and this average means that the comparisons inside TWFE disagree. One TWFE number can hide comparisons that point in opposite directions. So report the group-time effects and their average.</p>
+</section>
+
+<section class="refs prose" aria-labelledby="refs">
+<h2 id="refs">References</h2>
+<ol id="st-refs">
+  <li>Callaway, B., &amp; Sant'Anna, P. H. C. (2021). Difference-in-differences with multiple time periods. <cite>Journal of Econometrics, 225</cite>(2), 200-230. <a href="https://doi.org/10.1016/j.jeconom.2020.12.001">https://doi.org/10.1016/j.jeconom.2020.12.001</a></li>
+  <li>de Chaisemartin, C., &amp; D&apos;Haultf&oelig;uille, X. (2020). Two-way fixed effects estimators with heterogeneous treatment effects. <cite>American Economic Review, 110</cite>(9), 2964-2996. <a href="https://doi.org/10.1257/aer.20181169">https://doi.org/10.1257/aer.20181169</a></li>
+  <li>Goodman-Bacon, A. (2021). Difference-in-differences with variation in treatment timing. <cite>Journal of Econometrics, 225</cite>(2), 254-277. <a href="https://doi.org/10.1016/j.jeconom.2021.03.014">https://doi.org/10.1016/j.jeconom.2021.03.014</a></li>
+  <li>Huntington-Klein, N. (2025). <cite>The effect: An introduction to research design and causality</cite> (2nd ed.). Chapman &amp; Hall. Chapter 16, Fixed Effects, and chapter 18, Difference-in-Differences. Free online edition: <a href="https://theeffectbook.net/ch-FixedEffects.html">chapter 16</a> and <a href="https://theeffectbook.net/ch-DifferenceinDifference.html">chapter 18</a>.</li>
+</ol>
+</section>
+
+<nav class="pager" aria-label="Module pages">
+  <a href="did.html">Previous: 5.1 Difference-in-differences</a>
+  <a href="event-study.html">Next: 5.3 Event study and placebo dates</a>
+</nav>
+</main>
+
+<footer class="site-footer"><div class="inner">
+<p>All data on this site are simulated in your browser.</p>
+<p>Made by <a href="https://j1yoo.github.io/">Jaewon Yoo</a>, National Tsing Hua University. Code: <a href="https://polyformproject.org/licenses/noncommercial/1.0.0">PolyForm Noncommercial 1.0.0</a>. Text: <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/">Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 (CC BY-NC-ND 4.0)</a>.</p>
+</div></footer>
+<script src="assets/js/core/analytics.js"></script>
+<script src="assets/vendor/katex/katex.min.js"></script>
+<script src="assets/vendor/katex/auto-render.min.js"></script>
+<script src="assets/js/core/math.js"></script>
+<script src="assets/js/core/rng.js"></script>
+<script src="assets/js/core/stats.js"></script>
+<script src="assets/js/core/plot.js"></script>
+<script src="assets/js/core/ui.js"></script>
+<script src="assets/js/sims/staggered.js"></script>
+<script src="assets/js/pages/staggered-page.js"></script>
+</body>
+</html>

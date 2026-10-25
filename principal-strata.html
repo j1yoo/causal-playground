@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Principal strata | Causal Playground</title>
+<meta name="description" content="Interactive simulation: why comparing wages among employed people can mislead when a training program changes who has a job, and what principal strata compare instead.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/vendor/katex/katex.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+  /* Left-align the text cells of the two concept tables. */
+  #ps-kinds td, #ps-map td { text-align: left; }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><div class="inner">
+  <a class="site-title" href="index.html">Causal Playground</a>
+  <nav class="site-nav" aria-label="Modules">
+    <span class="nav-part"><span class="nav-part-name">1 Randomized experiments</span> <a href="randomization-inference.html">Randomization inference</a> <a href="neyman.html">Neyman and blocking</a></span>
+    <span class="nav-part"><span class="nav-part-name">2 Observational studies</span> <a href="controls.html">Regression and controls</a></span>
+    <span class="nav-part"><span class="nav-part-name">3 Noncompliance</span> <a href="iv.html">Instrumental variables</a> <a href="principal-strata.html" aria-current="page">Principal strata</a></span>
+    <span class="nav-part"><span class="nav-part-name">4 Regression discontinuity</span> <a href="rd.html">Sharp design</a></span>
+    <span class="nav-part"><span class="nav-part-name">5 Difference-in-differences</span> <a href="did.html">Parallel trends</a> <a href="staggered.html">Staggered adoption</a> <a href="event-study.html">Event study</a></span>
+    <span class="nav-part"><span class="nav-part-name">6 Prediction and decisions</span> <a href="selective-labels.html">Selective labels</a> <a href="uplift.html">Uplift targeting</a></span>
+  </nav>
+</div></header>
+
+<main id="main">
+<p class="kicker">3.2 Noncompliance</p>
+<h1>Principal strata: when the treatment decides whose outcome we see</h1>
+<p class="lede">A job training program can help people find a job, and a wage exists only for a person with a job. This page shows why a comparison of wages among employed people can mislead, even in a randomized experiment. It also shows which comparison is fair.</p>
+
+<section class="prose" aria-labelledby="brief">
+<h2 id="brief">In brief</h2>
+<p>A city runs a job training program, and a coin flip decides who gets the training. The training can help some people find a job. A wage exists only for a person with a job, so we can compare wages only among people who have a job. We want to know how the training changes wages.</p>
+<ul>
+<li>The <strong>naive comparison</strong> is the average wage of trained workers minus the average wage of untrained workers.</li>
+<li>The <strong>always employed</strong> would work with or without the training. The <strong>true effect for the always employed</strong> is the effect of the training on their wages. Only they have a wage both with and without the training.</li>
+<li>The <strong>fair comparison</strong> compares the wages of the always employed only. Real data cannot make this comparison, because nobody can see which group a person belongs to.</li>
+<li>The <strong>Lee bounds</strong> are a lower and an upper bound for the effect on the always employed. They assume that the training never costs anyone a job.</li>
+</ul>
+<p>Move the sliders and watch these numbers. The explanation below the simulation gives the reasons.</p>
+</section>
+
+<section aria-labelledby="try">
+<h2 id="try">Try it</h2>
+<p class="prose">The simulation has 2,000 people, and a coin flip assigns the training. Each person has a job readiness score. The sliders set the true effect on wages, the share of people whom training helps, the wage gap by job readiness, and the noise.</p>
+<details class="symbols" id="ps-sim-details">
+<summary>How the simulation makes the data</summary>
+<p>People with a higher score find a job more easily, and, when the wage gap slider is above 0, they also earn more. Without training, half of the people work.</p>
+<p>The training lowers the score needed for a job, so it helps a share of people find one. It never costs anyone a job. It adds the true effect to the wage of every trained worker.</p>
+<p>In symbols, the simulation draws a job readiness score \(r\) from the uniform distribution on \([0, 1]\). A person works without training if \(r &gt; 0.5\) and with training if \(r &gt; 0.5 - h\). Here \(h\) is the share of people whom the training helps.</p>
+<p>The wage without training is \(Y(0) = 20 + \beta z + \sigma\varepsilon\). Here \(z = (r - 0.5)\sqrt{12}\) is the readiness score scaled to a standard deviation of 1. In this formula, \(\beta\) is the wage gap by readiness, \(\sigma\) is the noise, and \(\varepsilon\) is a standard normal draw. The wage with training is \(Y(1) = Y(0) + \tau\).</p>
+</details>
+<div class="sim">
+<div class="sim-grid">
+<form id="ps-controls" class="controls" aria-label="Simulation settings">
+  <div class="control">
+    <label for="ps-tau">True effect of training on wages <output for="ps-tau"></output></label>
+    <input type="range" id="ps-tau" name="tau" min="-2" max="4" step="0.1" value="1">
+    <p class="hint">The same for every worker. It is the effect for the always employed.</p>
+  </div>
+  <div class="control">
+    <label for="ps-helped">Share of people whom training helps get a job <output for="ps-helped"></output></label>
+    <input type="range" id="ps-helped" name="helped" min="0" max="0.4" step="0.05" value="0.3" data-format="pct">
+  </div>
+  <div class="control">
+    <label for="ps-slope">Wage gap by job readiness <output for="ps-slope"></output></label>
+    <input type="range" id="ps-slope" name="slope" min="0" max="5" step="0.5" value="3">
+    <p class="hint">Wage points per standard deviation of the readiness score. At 0, the helped people would earn what the always employed earn.</p>
+  </div>
+  <div class="control">
+    <label for="ps-noise">Wage noise (standard deviation) <output for="ps-noise"></output></label>
+    <input type="range" id="ps-noise" name="noise" min="0.5" max="5" step="0.5" value="3">
+  </div>
+  <div class="button-row">
+    <button type="button" id="ps-new">Draw a new sample</button>
+    <button type="reset">Reset</button>
+    <span class="sample-label" id="ps-sample"></span>
+  </div>
+</form>
+<figure class="chart">
+  <ul class="legend" id="ps-legend"></ul>
+  <svg id="ps-chart"></svg>
+  <figcaption>Each dot is one person with a job. Real data show the dots but not their colors. The colors come from the simulation, which knows each person's group. Solid gray lines mark the average wage of all workers in each column, with its value. The dashed blue line marks the average wage of the always employed among trained workers. Hover over a dot to see its wage.</figcaption>
+</figure>
+</div>
+
+<div class="results-wrap">
+<table class="results">
+  <caption>The four groups in this sample (simulation only)</caption>
+  <thead><tr><th scope="col">Group</th><th scope="col">Share of people</th><th scope="col">Average wage with training</th></tr></thead>
+  <tbody>
+    <tr><td><span class="swatch s1"></span>Always employed</td><td id="ps-s-always"></td><td id="ps-w-always"></td></tr>
+    <tr><td><span class="swatch s2"></span>Helped by the training</td><td id="ps-s-helped"></td><td id="ps-w-helped"></td></tr>
+    <tr><td>Hurt by the training</td><td>0%</td><td>nobody in this group</td></tr>
+    <tr><td>Never employed</td><td id="ps-s-never"></td><td>no wage</td></tr>
+  </tbody>
+</table>
+</div>
+<dl class="readout">
+  <div><dt>Employment rate without training</dt><dd id="ps-r-qc"></dd></div>
+  <div><dt>Employment rate with training</dt><dd id="ps-r-qt"></dd></div>
+  <div><dt>Naive comparison: trained workers minus untrained workers</dt><dd id="ps-r-naive"></dd></div>
+  <div><dt>95% confidence interval of the naive comparison</dt><dd id="ps-r-ci"></dd></div>
+  <div><dt>True effect for the always employed</dt><dd id="ps-r-true"></dd></div>
+  <div><dt>Naive comparison minus true effect</dt><dd id="ps-r-err"></dd></div>
+  <div><dt>Fair comparison: always employed only (simulation only)</dt><dd id="ps-r-fair"></dd></div>
+  <div><dt>Lee bounds for the effect on the always employed</dt><dd id="ps-r-lee"></dd></div>
+  <div><dt>Share of trained workers trimmed for the bounds</dt><dd id="ps-r-trim"></dd></div>
+</dl>
+</div>
+<noscript><p class="noscript">The simulation needs JavaScript. The text on this page still explains the idea.</p></noscript>
+</section>
+
+<aside class="notice" aria-labelledby="notice">
+<h2 id="notice">What to notice</h2>
+<ul>
+  <li>At the default settings, the training raises the wage of every worker by 1. Yet the naive comparison is negative, about &minus;0.3 to &minus;0.7. In the chart, the orange dots sit low in the training column and pull its average down.</li>
+  <li>Look at the fair comparison. It keeps only the blue dots in the training column and lands near +1. Real data cannot make this comparison, because they do not show the colors.</li>
+  <li>Set the share of people whom training helps to 0%. The training column now has only blue dots, and the naive comparison moves near +1. Set the share back to 30% and set the wage gap by job readiness to 0. The helped people now earn like the always employed, and the naive comparison is again near +1. So the bias needs two things: the training changes who works, and the new workers differ in wages.</li>
+  <li>Press Reset and look at the Lee bounds. They run from about &minus;2.7 to +2.0 and contain the true effect. Set the share of helped people to 40%. The bounds get wider. Set it to 0%. They shrink to a narrow range near the naive comparison.</li>
+  <li>Press Reset and press Draw a new sample several times. The naive comparison stays below the true effect in every sample. New samples do not remove the gap, so it is bias, not chance.</li>
+</ul>
+</aside>
+
+<section class="prose" aria-labelledby="idea">
+<h2 id="idea">The idea</h2>
+<p>A city runs a job training program. A coin flip decides who gets the training. We want to know how the training changes wages. Because of the coin flip, the trained group and the untrained group are alike on average (see <a href="index.html#terms">random assignment</a>).</p>
+<p>A wage exists only for a person with a job. So we can compare wages only among people who have a job. This looks harmless, because the coin flip assigned the training. It is not harmless, because the training can also change who has a job.</p>
+<p>Suppose that the training helps some people find a job. Without the training, these people would not work. They may also earn less than people who would work anyway. Then the trained workers include extra workers with low wages.</p>
+<p>A comparison of wages among workers can then make the training look as if it lowers wages. This can happen even when the training raises the wage of every worker. The problem comes from a comparison that conditions on a variable, employment, that the treatment itself changes. This is called post-treatment bias (Frangakis and Rubin 2002).</p>
+
+<h3>Four kinds of people</h3>
+<p>Each person has two potential employment outcomes: S(1), whether the person works with the training, and S(0), whether the person works without it. The pair of values sorts people into four groups. Frangakis and Rubin (2002) call these groups <strong>principal strata</strong>.</p>
+<div class="results-wrap">
+<table class="results" id="ps-kinds">
+  <thead><tr><th scope="col">Group</th><th scope="col">Works without training, S(0)</th><th scope="col">Works with training, S(1)</th><th scope="col">Data show a wage</th></tr></thead>
+  <tbody>
+    <tr><td><span class="swatch s1"></span>Always employed</td><td>yes</td><td>yes</td><td>with or without training</td></tr>
+    <tr><td><span class="swatch s2"></span>Helped by the training</td><td>no</td><td>yes</td><td>only with training</td></tr>
+    <tr><td>Hurt by the training</td><td>yes</td><td>no</td><td>only without training</td></tr>
+    <tr><td>Never employed</td><td>no</td><td>no</td><td>never</td></tr>
+  </tbody>
+</table>
+</div>
+<p>The training cannot change the group of a person, because each group is defined by both potential outcomes. So a comparison inside one group compares like with like. A wage effect is well defined only for the always employed. Only they have a wage both with and without the training (Zhang and Rubin 2003).</p>
+<p>In symbols, write \(D = 1\) for a trained person and \(D = 0\) otherwise. \(S(d)\) is employment and \(Y(d)\) is the wage under training status \(d\). \(Y(d)\) exists only when \(S(d) = 1\). The target is the wage effect for the always employed (AE), the people with \(S(0) = S(1) = 1\):</p>
+<p class="formula">\[\tau_{\text{AE}} = E[Y(1) - Y(0) \mid S(0) = 1, S(1) = 1]\]</p>
+<p>Nobody can see which group a person belongs to, because each person shows only one of the two employment outcomes. A trained person with a job is always employed or helped. An untrained person with a job is always employed or hurt. So each observed group of workers is a mix of two strata. A comparison of their average wages then mixes the effect of the training with the difference between the strata.</p>
+<p>In symbols, the naive comparison is \(E[Y \mid D = 1, S = 1] - E[Y \mid D = 0, S = 1]\). Suppose that the training never costs anyone a job. Under random assignment, the untrained workers are then all always employed, and the trained workers are the always employed plus the helped (H). Write \(\pi_{\text{AE}}\) and \(\pi_{\text{H}}\) for the shares of the two strata. Then</p>
+<p class="formula">\[\begin{aligned} & \text{naive} - \tau_{\text{AE}} \\ = {} & \frac{\pi_{\text{H}}}{\pi_{\text{AE}} + \pi_{\text{H}}} \, (E[Y(1) \mid \text{H}] - E[Y(1) \mid \text{AE}]) \end{aligned}\]</p>
+<p>The bias is zero when nobody is helped or when the helped earn, on average, what the always employed earn with training.</p>
+<details class="symbols" id="ps-death-details">
+<summary>The same problem in medicine: outcomes truncated by death</summary>
+<p>The same problem appears in medicine. A treatment can change both survival and cholesterol, and cholesterol does not exist for a patient who dies. Suppose that the treatment saves patients with high cholesterol. Then the treated survivors have higher cholesterol on average, and the treatment can look as if it raises cholesterol. Zhang and Rubin (2003) call outcomes like this truncated by death. The outcome does not exist for some units, so this is not a usual missing-data problem.</p>
+</details>
+
+<h3>What the data can still tell us</h3>
+<p>Assume that the training never costs anyone a job. This assumption is called <strong>monotonicity</strong>. Then the hurt group is empty, and every untrained worker is always employed. The experiment also shows how many people the training helps: the employment rate with training minus the employment rate without it.</p>
+<p>Lee (2009) uses these two facts to bound the wage effect for the always employed. Among trained workers, a known share is helped, but we do not know which workers they are. If the helped workers have the highest wages, dropping that share from the top of the trained wages gives a lower bound. If they have the lowest wages, dropping it from the bottom gives an upper bound. The true effect for the always employed lies between the two bounds. The bounds get wider when the training helps more people.</p>
+<p>For the bounds, let \(q_T\) and \(q_C\) be the employment rates with and without training. The share of helped people among trained workers is \((q_T - q_C) / q_T\) (Lee 2009).</p>
+
+<details class="symbols" id="ps-judges-details">
+<summary>From training to judges in Module 6.1</summary>
+<p>Module 6.1 uses the same structure for judges who decide whether to release defendants before trial. The data show failure to appear in court only for released defendants, as they show a wage only for a person with a job.</p>
+<div class="results-wrap">
+<table class="results" id="ps-map">
+  <thead><tr><th scope="col">This page</th><th scope="col">Module 6.1, selective labels</th></tr></thead>
+  <tbody>
+    <tr><td>Training or no training</td><td>A lenient judge or a strict judge</td></tr>
+    <tr><td>Employment</td><td>Release before trial</td></tr>
+    <tr><td>Wage, seen only for a worker</td><td>Failure to appear, seen only for a released defendant</td></tr>
+    <tr><td>Always employed</td><td>Released by both judges</td></tr>
+    <tr><td>Helped by the training</td><td>Released only by the lenient judge</td></tr>
+    <tr><td>Never employed</td><td>Detained by both judges</td></tr>
+  </tbody>
+</table>
+</div>
+<p>One difference matters. A wage for a person without a job does not exist. For a detained defendant, failure to appear if released is a well-defined outcome that the data do not show. Module 6.2 sorts customers into four kinds by the pair of potential outcomes of an offer. Those kinds look like principal strata, but they are defined by the outcome itself, not by a variable that the treatment changes.</p>
+</details>
+
+</section>
+
+<section class="refs prose" aria-labelledby="refs">
+<h2 id="refs">References</h2>
+<ol id="ps-refs">
+  <li>Frangakis, C. E., &amp; Rubin, D. B. (2002). Principal stratification in causal inference. <cite>Biometrics, 58</cite>(1), 21-29. <a href="https://doi.org/10.1111/j.0006-341X.2002.00021.x">https://doi.org/10.1111/j.0006-341X.2002.00021.x</a></li>
+  <li>Lee, D. S. (2009). Training, wages, and sample selection: Estimating sharp bounds on treatment effects. <cite>The Review of Economic Studies, 76</cite>(3), 1071-1102. <a href="https://doi.org/10.1111/j.1467-937X.2009.00536.x">https://doi.org/10.1111/j.1467-937X.2009.00536.x</a></li>
+  <li>Zhang, J. L., &amp; Rubin, D. B. (2003). Estimation of causal effects via principal stratification when some outcomes are truncated by "death." <cite>Journal of Educational and Behavioral Statistics, 28</cite>(4), 353-368. <a href="https://doi.org/10.3102/10769986028004353">https://doi.org/10.3102/10769986028004353</a></li>
+</ol>
+</section>
+
+<nav class="pager" aria-label="Module pages">
+  <a href="iv.html">Previous: 3.1 Noncompliance and instrumental variables</a>
+  <a href="rd.html">Next: 4.1 Regression discontinuity</a>
+</nav>
+</main>
+
+<footer class="site-footer"><div class="inner">
+<p>All data on this site are simulated in your browser.</p>
+<p>Made by <a href="https://j1yoo.github.io/">Jaewon Yoo</a>, National Tsing Hua University. Code: <a href="https://polyformproject.org/licenses/noncommercial/1.0.0">PolyForm Noncommercial 1.0.0</a>. Text: <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/">Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 (CC BY-NC-ND 4.0)</a>.</p>
+</div></footer>
+<script src="assets/js/core/analytics.js"></script>
+<script src="assets/vendor/katex/katex.min.js"></script>
+<script src="assets/vendor/katex/auto-render.min.js"></script>
+<script src="assets/js/core/math.js"></script>
+<script src="assets/js/core/rng.js"></script>
+<script src="assets/js/core/stats.js"></script>
+<script src="assets/js/core/plot.js"></script>
+<script src="assets/js/core/ui.js"></script>
+<script src="assets/js/sims/strata.js"></script>
+<script src="assets/js/pages/strata-page.js"></script>
+</body>
+</html>

@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Noncompliance and instrumental variables | Causal Playground</title>
+<meta name="description" content="Interactive simulation: compliance types, the intention-to-treat effect, the Wald estimator and the local average treatment effect, and what goes wrong with a direct effect of assignment, defiers, or a weak instrument.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/vendor/katex/katex.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+  /* Page styles that style.css does not have. */
+  .iv-note { font-size: 0.85rem; color: var(--ink-2); margin: 6px 0 0; }
+  .iv-note:empty { display: none; }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><div class="inner">
+  <a class="site-title" href="index.html">Causal Playground</a>
+  <nav class="site-nav" aria-label="Modules">
+    <span class="nav-part"><span class="nav-part-name">1 Randomized experiments</span> <a href="randomization-inference.html">Randomization inference</a> <a href="neyman.html">Neyman and blocking</a></span>
+    <span class="nav-part"><span class="nav-part-name">2 Observational studies</span> <a href="controls.html">Regression and controls</a></span>
+    <span class="nav-part"><span class="nav-part-name">3 Noncompliance</span> <a href="iv.html" aria-current="page">Instrumental variables</a> <a href="principal-strata.html">Principal strata</a></span>
+    <span class="nav-part"><span class="nav-part-name">4 Regression discontinuity</span> <a href="rd.html">Sharp design</a></span>
+    <span class="nav-part"><span class="nav-part-name">5 Difference-in-differences</span> <a href="did.html">Parallel trends</a> <a href="staggered.html">Staggered adoption</a> <a href="event-study.html">Event study</a></span>
+    <span class="nav-part"><span class="nav-part-name">6 Prediction and decisions</span> <a href="selective-labels.html">Selective labels</a> <a href="uplift.html">Uplift targeting</a></span>
+  </nav>
+</div></header>
+
+<main id="main">
+<p class="kicker">3.1 Noncompliance</p>
+<h1>Noncompliance and instrumental variables (IV): what a randomized ad can estimate</h1>
+<p class="lede">An online store can randomize which ad each customer gets, but each customer decides whether to engage with it. This page uses a field experiment with a swipe ad to show what such an experiment can estimate. It also shows why comparisons by the customers' own choices mislead.</p>
+
+<section class="prose" aria-labelledby="brief">
+<h2 id="brief">In brief</h2>
+<p>A random half of the customers get a swipe ad that shows the book only on its last frame. The other customers get a standard ad that shows the book at once. A customer completes the swipe ad by swiping to the last frame, and few customers do. This page asks what completion does to spending.</p>
+<ul>
+<li>The <strong>intention-to-treat (ITT) effect</strong> is the difference in average spending between the two assigned groups.</li>
+<li>The <strong>first stage</strong> is the difference between the two groups in the share who complete.</li>
+<li>The <strong>Wald estimate</strong> is the ITT effect divided by the first stage.</li>
+<li>Under the assumptions in the explanation, the Wald estimate estimates the <strong>local average treatment effect (LATE)</strong>. This is the average effect of completion for compliers, the customers who complete only if they get the swipe ad.</li>
+</ul>
+<p>Move the sliders and watch these numbers. The explanation below the simulation gives the reasons.</p>
+</section>
+
+<section aria-labelledby="try">
+<h2 id="try">Try it</h2>
+<p class="prose">The simulation starts with 2,000 customers, and half of them get the swipe ad. The sliders set the shares of the compliance types, the effect of completion, and two possible problems. In the study, nobody with the standard ad could complete, so the sliders for always-takers and defiers start at 0.</p>
+<details class="symbols" id="iv-sim-details">
+<summary>How the simulation makes the data</summary>
+<p>Each customer gets a type, with the shares on the sliders. The rest are never-takers. Without the swipe ad, compliers and defiers spend about 40 dollars on books in 30 days on average. Always-takers spend more by the amount on the gap slider. Never-takers spend less by the same amount.</p>
+<p>Completion adds the complier effect, the LATE, to the spending of compliers. For always-takers, it adds the complier effect plus 5 dollars. For never-takers, it adds the complier effect minus 5 dollars. For defiers, it adds the complier effect minus 10 dollars.</p>
+<p>The simulation knows the type and both potential outcomes of every customer. Real data show only the assignment, the completion, and the spending. All amounts on this page are simulated, in dollars.</p>
+</details>
+<div class="sim">
+<div class="sim-grid">
+<form id="iv-controls" class="controls" aria-label="Simulation settings">
+  <div class="control">
+    <label for="iv-c">Share of compliers <output for="iv-c"></output></label>
+    <input type="range" id="iv-c" name="compliers" min="0.02" max="0.7" step="0.01" value="0.5" data-format="pct">
+    <p class="hint">In the study, about 3 in 100 exposures to the swipe ad reached the last frame.</p>
+  </div>
+  <div class="control">
+    <label for="iv-a">Share of always-takers <output for="iv-a"></output></label>
+    <input type="range" id="iv-a" name="always" min="0" max="0.2" step="0.01" value="0" data-format="pct">
+    <p class="hint">Customers who complete with the standard ad. The study design rules them out. At 0%, and with no defiers, noncompliance is one-sided.</p>
+  </div>
+  <div class="control">
+    <label for="iv-d">Share of defiers <output for="iv-d"></output></label>
+    <input type="range" id="iv-d" name="defiers" min="0" max="0.1" step="0.01" value="0" data-format="pct">
+  </div>
+  <div class="control">
+    <label for="iv-gap">Spending gap between types without the swipe ad (dollars) <output for="iv-gap"></output></label>
+    <input type="range" id="iv-gap" name="gap" min="0" max="30" step="1" value="10">
+  </div>
+  <div class="control">
+    <label for="iv-eff">Effect of completion for compliers (dollars) <output for="iv-eff"></output></label>
+    <input type="range" id="iv-eff" name="effect" min="-10" max="30" step="1" value="10">
+  </div>
+  <div class="control">
+    <label for="iv-h">Direct effect of the swipe ad on customers who stop early (dollars) <output for="iv-h"></output></label>
+    <input type="range" id="iv-h" name="direct" min="-10" max="10" step="1" value="0">
+    <p class="hint">They saw the first frames but not the book. At 0, the exclusion restriction holds.</p>
+  </div>
+  <div class="control">
+    <label for="iv-n">Number of customers <output for="iv-n"></output></label>
+    <input type="range" id="iv-n" name="n" min="200" max="5000" step="100" value="2000" data-format="int">
+  </div>
+  <div class="button-row">
+    <button type="button" id="iv-new">Draw a new sample</button>
+    <button type="reset">Reset</button>
+    <span class="sample-label" id="iv-sample"></span>
+  </div>
+</form>
+<div class="chart-stack">
+<figure class="chart">
+  <p class="chart-title">Who is in each observed group</p>
+  <ul class="legend" id="iv-cells-legend"></ul>
+  <svg id="iv-cells"></svg>
+  <p class="iv-note" id="iv-cells-key"></p>
+  <figcaption>Each column counts the customers with one combination of assignment and completion. Real data show the height of each column but not its colors. The colors come from the simulation, which knows each customer's type. Hover over a part to see its count.</figcaption>
+</figure>
+<figure class="chart">
+  <p class="chart-title">Four estimates in this sample</p>
+  <ul class="legend" id="iv-est-legend"></ul>
+  <svg id="iv-est"></svg>
+  <figcaption>Each dot is an estimate, and each vertical line is its 95% confidence interval. The dark dashed line marks the true LATE, the effect for compliers. The light dashed line marks the true ATE, the average effect for all customers. Hover over a dot to see its values.</figcaption>
+</figure>
+<figure class="chart">
+  <p class="chart-title">The Wald estimate over 2,000 repeated experiments</p>
+  <ul class="legend" id="iv-weak-legend"></ul>
+  <svg id="iv-weak"></svg>
+  <figcaption>The page repeats the experiment 2,000 times with new customers and the same settings. The bars count the Wald estimates. The dashed line marks the true LATE. The orange line marks the average as-treated comparison. Estimates outside the range of the horizontal axis are counted in the readout below. Hover over a bar to see its count.</figcaption>
+</figure>
+</div>
+</div>
+<p class="iv-note" id="iv-status"></p>
+
+<div class="results-wrap">
+<table class="results">
+  <caption>The compliance types (simulation only)</caption>
+  <thead><tr><th scope="col">Type</th><th scope="col">Share in this sample</th><th scope="col">Spending without the swipe ad</th><th scope="col">Effect of completion</th></tr></thead>
+  <tbody>
+    <tr><td><span class="swatch s1"></span>Compliers: complete only with the swipe ad</td><td id="iv-t-complier-share"></td><td id="iv-t-complier-mean0"></td><td id="iv-t-complier-effect"></td></tr>
+    <tr><td><span class="swatch s2"></span>Always-takers: complete with either assignment</td><td id="iv-t-always-share"></td><td id="iv-t-always-mean0"></td><td id="iv-t-always-effect"></td></tr>
+    <tr><td><span class="swatch s3"></span>Never-takers: never complete</td><td id="iv-t-never-share"></td><td id="iv-t-never-mean0"></td><td id="iv-t-never-effect"></td></tr>
+    <tr><td><span class="swatch s4"></span>Defiers: complete only with the standard ad</td><td id="iv-t-defier-share"></td><td id="iv-t-defier-mean0"></td><td id="iv-t-defier-effect"></td></tr>
+  </tbody>
+</table>
+</div>
+<div class="results-wrap">
+<table class="results">
+  <caption>The four estimates in this sample</caption>
+  <thead><tr><th scope="col">Estimate</th><th scope="col">Value</th><th scope="col">95% confidence interval</th></tr></thead>
+  <tbody>
+    <tr><td><span class="swatch s3"></span>A. Intention-to-treat effect on spending</td><td id="iv-e-itt-est"></td><td id="iv-e-itt-ci"></td></tr>
+    <tr><td><span class="swatch s2"></span>B. As-treated comparison</td><td id="iv-e-asT-est"></td><td id="iv-e-asT-ci"></td></tr>
+    <tr><td><span class="swatch s5"></span>C. Per-protocol comparison</td><td id="iv-e-pp-est"></td><td id="iv-e-pp-ci"></td></tr>
+    <tr class="key"><td><span class="swatch s1"></span>D. Wald estimate</td><td id="iv-e-wald-est"></td><td id="iv-e-wald-ci"></td></tr>
+  </tbody>
+</table>
+</div>
+<dl class="readout">
+  <div><dt>Share who complete: with the swipe ad and with the standard ad</dt><dd id="iv-r-join"></dd></div>
+  <div><dt>First stage (difference in the share who complete)</dt><dd id="iv-r-first"></dd></div>
+  <div><dt>First-stage F statistic</dt><dd id="iv-r-f"></dd></div>
+  <div><dt>ITT effect on spending (95% interval)</dt><dd id="iv-r-itt"></dd></div>
+  <div><dt>Wald estimate (95% interval)</dt><dd id="iv-r-wald"></dd></div>
+  <div><dt>Anderson-Rubin 95% interval</dt><dd id="iv-r-ar"></dd></div>
+  <div><dt>True LATE (simulation only)</dt><dd id="iv-r-late"></dd></div>
+  <div><dt>True ATE (simulation only)</dt><dd id="iv-r-ate"></dd></div>
+  <div><dt>Wald estimate minus true LATE</dt><dd id="iv-r-err"></dd></div>
+  <div><dt>Expected part of that difference from the direct effect</dt><dd id="iv-r-gap-ex"></dd></div>
+  <div><dt>Expected part of that difference from defiers</dt><dd id="iv-r-gap-df"></dd></div>
+</dl>
+<p class="hint">The two expected parts come from the error formula in the box on two-sided noncompliance below, with the shares on the sliders. In one sample, the Wald estimate also moves by chance. The readouts below summarize the 2,000 repeated experiments.</p>
+<dl class="readout">
+  <div><dt>Median of the Wald estimates</dt><dd id="iv-w-median"></dd></div>
+  <div><dt>Median first-stage F statistic</dt><dd id="iv-w-f"></dd></div>
+  <div><dt>Usual 95% intervals that contain the true LATE</dt><dd id="iv-w-cover"></dd></div>
+  <div><dt>Anderson-Rubin intervals that contain the true LATE</dt><dd id="iv-w-ar"></dd></div>
+  <div><dt>Anderson-Rubin intervals that are unbounded</dt><dd id="iv-w-unb"></dd></div>
+  <div><dt>Average as-treated comparison</dt><dd id="iv-w-ast"></dd></div>
+  <div><dt>Wald estimates outside the chart</dt><dd id="iv-w-out"></dd></div>
+  <div><dt>Experiments with no Wald estimate (first stage of exactly 0)</dt><dd id="iv-w-none"></dd></div>
+</dl>
+<p class="hint">The usual interval is the Wald estimate plus or minus 1.96 times its standard error. Its coverage leaves out the experiments with no Wald estimate. The ATE, the LATE, the p-value, and other terms are defined in the <a href="index.html#terms">key terms</a> on the home page.</p>
+</div>
+<noscript><p class="noscript">The simulation needs JavaScript. The text on this page still explains the method.</p></noscript>
+</section>
+
+<aside class="notice" aria-labelledby="notice">
+<h2 id="notice">What to notice</h2>
+<ul>
+  <li>At the default settings, half of the customers are compliers, and nobody completes with the standard ad. The ITT effect on spending is 5.06, about half of the true LATE of 10. The Wald estimate divides it by the first stage of 0.502 and gives 10.09. The as-treated comparison (16.55) and the per-protocol comparison (14.93) are too high, because never-takers, who spend less, fill the group that did not complete. Set the gap to 0: both comparisons fall to about 10. The light dashed line, the ATE of 7.54, stays below the LATE, because never-takers would gain less from completion.</li>
+  <li>Set the gap back to 10 and the complier share to 3%, close to the study. The ITT effect falls to 0.57, and its interval, from &minus;0.31 to 1.45, contains 0. The first stage is only 0.032, so the Wald estimate of 17.92 has a wide interval, from &minus;8.84 to 44.68. In the repeated experiments, the median Wald estimate is 9.53, close to the true LATE, and the median first-stage F statistic is 30.9.</li>
+  <li>Keep the complier share at 3% and set the direct effect to 1. The expected part from the direct effect is 32.33: the direct effect times the never-taker share (97%) divided by the complier share (3%). The Wald estimate jumps to 48.17, and only 46.2% of the usual intervals in the repeated experiments contain the true LATE.</li>
+  <li>Set the direct effect back to 0, the complier share back to 50%, and the share of defiers to 10%. Some customers now complete only with the standard ad, which the study design rules out. The Wald estimate is 12.78, above both the complier effect (10) and the defier effect (0). The expected part from defiers is 2.50.</li>
+  <li>Set the defiers back to 0, the complier share to 3%, the always-takers to 20%, and the gap to 30. The assignment now moves few customers compared with the noise. In Sample 1 the first-stage F statistic is 0.5, and the Wald estimate is &minus;51.66 with an interval from &minus;404.16 to 300.83. In the repeated experiments, the median Wald estimate is 15.77, pulled toward the as-treated comparison near 72. Only 87.8% of the usual intervals contain the true LATE, while 95.3% of the Anderson-Rubin intervals do. Most Anderson-Rubin intervals (62.4%) are unbounded.</li>
+</ul>
+</aside>
+
+<section class="prose" aria-labelledby="idea">
+<h2 id="idea">The idea</h2>
+<p>An online bookstore wants to know whether a new kind of ad sells books. The ad is an <strong>interactive blind lead-in ad</strong>: a swipe ad that shows the book only on its last frame. A customer <strong>completes</strong> the ad by swiping to the last frame.</p>
+<p>A field experiment tested this ad with more than 109,000 customers of a large online bookstore in South Korea (Yoon et al. in press). It assigned each customer at random to the swipe ad or to a standard ad that shows the book at once. Only about 3 in 100 exposures to the swipe ad reached the last frame. On average, assignment to the swipe ad did not raise purchases. An instrumental variables analysis found that completion raised later purchases among the customers whom the swipe ad moved to complete it. This page shows how one experiment can give both results.</p>
+<p>The assignment, Z, is random. It is an <strong>instrumental variable</strong>, or instrument, for completion: it is assigned at random, and it changes who completes. Completion, D, is the treatment of interest, and each customer chooses it. A customer who gets the swipe ad and stops early does not take the treatment that the assignment offers. This is called <strong>noncompliance</strong>.</p>
+<p>The outcome, Y, is spending on books in the next 30 days. The study measured purchases. This page simulates spending, so that the numbers are easy to read.</p>
+<p>Each customer has a <strong>compliance type</strong>, defined by the choices that the customer would make with each assignment (Angrist, Imbens, and Rubin 1996). A customer with the standard ad has no last frame to reach. So the experiment has only two types. <strong>Compliers</strong> would complete the swipe ad if they got it. <strong>Never-takers</strong> would not complete it.</p>
+<p>This setting is called one-sided noncompliance (Imbens and Rubin 2015, ch. 23). The assignment cannot change a customer's type, so the types are principal strata, as in Module 3.2. The data show the type only for the customers who got the swipe ad.</p>
+<details class="symbols" id="iv-types-symbols">
+<summary>The types in symbols</summary>
+<p>\(D(z)\) is the completion of a customer with assignment \(z\) (1 for the swipe ad, 0 for the standard ad). \(Y(z, d)\) is spending with assignment \(z\) and completion \(d\). The exclusion restriction says that \(Y(z, d)\) does not depend on \(z\), so it can be written \(Y(d)\).</p>
+<p>The types are compliers (\(D(0) = 0, D(1) = 1\)), always-takers (1, 1), never-takers (0, 0), and defiers (1, 0). Their shares are \(\pi_c\), \(\pi_a\), \(\pi_n\), and \(\pi_d\). One-sided noncompliance means \(D(0) = 0\) for every customer, so \(\pi_a = \pi_d = 0\).</p>
+</details>
+<p>Three simple comparisons are common. The <strong>intention-to-treat (ITT) effect</strong> compares the average spending of the two assigned groups. Random assignment makes this comparison unbiased for the effect of the assignment. The ITT effect is not the effect of completion. It averages over compliers and never-takers, so with 3 compliers in 100 customers even a large effect of completion gives a small ITT effect.</p>
+<p>The <strong>as-treated</strong> comparison puts the customers who completed against all customers who did not. The <strong>per-protocol</strong> comparison keeps only the customers who followed their assignment. It compares the customers who completed the swipe ad with the customers who got the standard ad. Both comparisons use groups that the customers formed by their own choices. Customers who swipe to the end may be keen readers who buy more books anyway. So these comparisons bring back the selection bias that random assignment removed (Imbens and Rubin 2015, ch. 23).</p>
+<p>The <strong>Wald estimator</strong> divides the ITT effect on spending by the ITT effect on completion. The second number, the difference in the share who complete, is the <strong>first stage</strong>.</p>
+<p class="formula">\[\begin{aligned} \text{Wald} &= \frac{\text{ITT}_Y}{\text{ITT}_D} \\ &= \frac{E[Y \mid Z = 1] - E[Y \mid Z = 0]}{E[D \mid Z = 1] - E[D \mid Z = 0]} \end{aligned}\]</p>
+<p>The Wald estimator estimates the <strong>local average treatment effect (LATE)</strong>, the average effect of completion for compliers. It does so if these assumptions hold (Angrist, Imbens, and Rubin 1996; Huntington-Klein 2025, ch. 19):</p>
+<ol>
+<li>The assignment is random.</li>
+<li>The assignment changes spending only through completion. This is the <strong>exclusion restriction</strong>.</li>
+<li>The assignment changes who completes, so the first stage is not zero.</li>
+<li>No customer completes only with the standard ad. Such a customer would be a defier, and this condition is called monotonicity. One-sided noncompliance makes it hold.</li>
+<li>The assignment of one customer does not change the choices or the spending of another customer. This is the no-interference condition in the key terms.</li>
+</ol>
+<p>Under these assumptions, the ITT effect on spending equals the complier share times the LATE. With one-sided noncompliance, every customer who completed is a complier with the swipe ad. Random assignment makes these customers like all compliers. So the Wald estimator then also estimates the average effect for the customers who completed (Imbens and Rubin 2015, ch. 23).</p>
+<p class="formula">\[\begin{aligned} \text{ITT}_D &= \pi_c, \qquad \text{ITT}_Y = \pi_c \times \text{LATE}, \\ \text{Wald} &= \frac{\pi_c \times \text{LATE}}{\pi_c} = \text{LATE} \end{aligned}\]</p>
+<p>The usual regression method for instrumental variables is two-stage least squares (2SLS). With one random assignment and no other variables, it gives the same number as the Wald estimator. The LATE says nothing about never-takers. The average treatment effect (ATE) for all customers can be different.</p>
+<p>The exclusion restriction needs thought in a design like this one. A never-taker with the swipe ad saw the first frames but not the book. A never-taker with the standard ad saw the book at once. If this difference changes spending, the assignment has a direct effect on spending, and the exclusion restriction fails.</p>
+<p>The Wald estimator then misses the LATE. Without defiers, the error is the direct effect times the share of never-takers, divided by the share of compliers (Angrist, Imbens, and Rubin 1996):</p>
+<p class="formula">\[\text{Wald} - \text{LATE} = h \, \frac{\pi_n}{\pi_c}\]</p>
+<p>Here \(h\) is the direct effect of the swipe ad on the customers who get it and do not complete. With 3 compliers in 100, a direct effect of 1 dollar moves the Wald estimate by about 32 dollars.</p>
+<details class="symbols" id="iv-weak-details">
+<summary>Weak instruments and the Anderson-Rubin interval</summary>
+<p>A small first stage makes the Wald estimate imprecise, because the sampling error of the ITT effect is divided by a small number. A <strong>weak instrument</strong> moves so few people that the first stage is small compared with its own sampling error. Then the Wald estimates spread out, and their median moves toward the as-treated comparison (Huntington-Klein 2025, ch. 19). The usual 95% interval also contains the truth less often than 95% of the time. The size of these problems also depends on how closely completion is related to spending without the swipe ad (Andrews, Stock, and Sun 2019).</p>
+<p>The usual check is the F statistic of the first stage: the square of the first stage divided by its standard error. A common rough rule asks for an F above 10. The Anderson-Rubin (AR) interval stays valid with a weak instrument. For each candidate effect b, it subtracts b times completion from spending. Then it tests whether the two assigned groups differ in the result. The interval keeps every b that this test does not reject at the 5% level, as Module 1.1 does for a constant effect.</p>
+<p>With a weak instrument, the AR interval can be unbounded, for example two half-lines (Andrews, Stock, and Sun 2019).</p>
+<p>In symbols, the AR interval collects every value \(b\) for which a test does not reject equal means of \(Y - bD\) in the two assigned groups. The test uses the 5% level.</p>
+</details>
+<details class="symbols" id="iv-two-sided-details">
+<summary>Two-sided noncompliance: always-takers and defiers</summary>
+<p>In other experiments, noncompliance is two-sided. Some people in the comparison group take the treatment anyway, for example the same ad from another source. They are <strong>always-takers</strong>. In principle, some people could do the opposite of their assignment. They are <strong>defiers</strong>.</p>
+<p>Suppose that defiers exist, that compliers outnumber them, and that their effect differs from the LATE. Then the Wald estimator targets a value outside the range between the two effects, beyond the LATE (Imbens and Rubin 2015, ch. 24). The sliders for these two types show both cases. In the study, both shares are 0.</p>
+<p>In symbols, let \(\tau_c\) and \(\tau_d\) be the average effects of completion for compliers and defiers. The first stage is \(\text{ITT}_D = \pi_c - \pi_d\). In the simulation on this page,</p>
+<p class="formula">\[\text{Wald} - \tau_c = \frac{h(\pi_n + \pi_d) + \pi_d(\tau_c - \tau_d)}{\pi_c - \pi_d}\]</p>
+</details>
+</section>
+
+<section class="refs prose" aria-labelledby="refs">
+<h2 id="refs">References</h2>
+<ol id="iv-refs">
+  <li>Andrews, I., Stock, J. H., &amp; Sun, L. (2019). Weak instruments in instrumental variables regression: Theory and practice. <cite>Annual Review of Economics, 11</cite>(1), 727-753. <a href="https://doi.org/10.1146/annurev-economics-080218-025643">https://doi.org/10.1146/annurev-economics-080218-025643</a></li>
+  <li>Angrist, J. D., Imbens, G. W., &amp; Rubin, D. B. (1996). Identification of causal effects using instrumental variables. <cite>Journal of the American Statistical Association, 91</cite>(434), 444-455. <a href="https://doi.org/10.1080/01621459.1996.10476902">https://doi.org/10.1080/01621459.1996.10476902</a></li>
+  <li>Huntington-Klein, N. (2025). <cite>The effect: An introduction to research design and causality</cite> (2nd ed.). Chapman &amp; Hall. Chapter 19, Instrumental Variables. Free online edition: <a href="https://theeffectbook.net/ch-InstrumentalVariables.html">https://theeffectbook.net/ch-InstrumentalVariables.html</a></li>
+  <li>Imbens, G. W., &amp; Rubin, D. B. (2015). <cite>Causal inference for statistics, social, and biomedical sciences: An introduction</cite>. Cambridge University Press. Chapter 23, Instrumental Variables Analysis of Randomized Experiments with One-Sided Noncompliance, and chapter 24, Instrumental Variables Analysis of Randomized Experiments with Two-Sided Noncompliance. <a href="https://doi.org/10.1017/CBO9781139025751">https://doi.org/10.1017/CBO9781139025751</a></li>
+<li class="study">Yoon, S., Yoo, J., Kim, M., Kim, W., &amp; Lee, M. S. (in press). Interactive blind lead-in ads and purchase conversion: The roles of completion and creative design features. <cite>Journal of Interactive Marketing</cite>. The study used as the example on this page. Abstract: <a href="https://j1yoo.github.io/research/">https://j1yoo.github.io/research/</a></li>
+</ol>
+</section>
+
+<nav class="pager" aria-label="Module pages">
+  <a href="controls.html">Previous: 2.1 Regression adjustment and good and bad controls</a>
+  <a href="principal-strata.html">Next: 3.2 Principal strata</a>
+</nav>
+</main>
+
+<footer class="site-footer"><div class="inner">
+<p>All data on this site are simulated in your browser.</p>
+<p>Made by <a href="https://j1yoo.github.io/">Jaewon Yoo</a>, National Tsing Hua University. Code: <a href="https://polyformproject.org/licenses/noncommercial/1.0.0">PolyForm Noncommercial 1.0.0</a>. Text: <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/">Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 (CC BY-NC-ND 4.0)</a>.</p>
+</div></footer>
+<script src="assets/js/core/analytics.js"></script>
+<script src="assets/vendor/katex/katex.min.js"></script>
+<script src="assets/vendor/katex/auto-render.min.js"></script>
+<script src="assets/js/core/math.js"></script>
+<script src="assets/js/core/rng.js"></script>
+<script src="assets/js/core/stats.js"></script>
+<script src="assets/js/core/plot.js"></script>
+<script src="assets/js/core/ui.js"></script>
+<script src="assets/js/sims/iv.js"></script>
+<script src="assets/js/pages/iv-page.js"></script>
+</body>
+</html>

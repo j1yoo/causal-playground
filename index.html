@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Causal Playground</title>
+<meta name="description" content="Interactive simulations for causal inference: change an assumption and watch what happens to an estimate.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/vendor/katex/katex.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><div class="inner">
+  <a class="site-title" href="index.html" aria-current="page">Causal Playground</a>
+  <nav class="site-nav" aria-label="Modules">
+    <span class="nav-part"><span class="nav-part-name">1 Randomized experiments</span> <a href="randomization-inference.html">Randomization inference</a> <a href="neyman.html">Neyman and blocking</a></span>
+    <span class="nav-part"><span class="nav-part-name">2 Observational studies</span> <a href="controls.html">Regression and controls</a></span>
+    <span class="nav-part"><span class="nav-part-name">3 Noncompliance</span> <a href="iv.html">Instrumental variables</a> <a href="principal-strata.html">Principal strata</a></span>
+    <span class="nav-part"><span class="nav-part-name">4 Regression discontinuity</span> <a href="rd.html">Sharp design</a></span>
+    <span class="nav-part"><span class="nav-part-name">5 Difference-in-differences</span> <a href="did.html">Parallel trends</a> <a href="staggered.html">Staggered adoption</a> <a href="event-study.html">Event study</a></span>
+    <span class="nav-part"><span class="nav-part-name">6 Prediction and decisions</span> <a href="selective-labels.html">Selective labels</a> <a href="uplift.html">Uplift targeting</a></span>
+  </nav>
+</div></header>
+
+<main id="main">
+<h1>Causal Playground</h1>
+<p class="lede">Each module page lets you change one assumption and watch what happens to an estimate. The data are simulated, so every module page knows the true value of what it estimates. You can see when a method recovers the true value and when it does not.</p>
+
+<section class="prose" aria-labelledby="how">
+<h2 id="how">How the pages work</h2>
+<ul>
+  <li>Each module page starts with a short explanation of one method.</li>
+  <li>In the simulation, move a slider to change one part of the setting. The charts and the numbers update at once.</li>
+  <li>Press <strong>Draw a new sample</strong> to see how much an estimate changes by chance. Press <strong>Reset</strong> to return to the starting values and the first sample.</li>
+  <li>Each module page ends with a <strong>What to notice</strong> box and a short list of references.</li>
+  <li>Solid lines show what real data would show. Dashed lines show true values that only a simulation knows. Dotted gray lines show what a method assumes.</li>
+</ul>
+</section>
+
+<h2 id="modules">Modules</h2>
+<p>The modules come in six parts. A module number such as 5.2 gives the part and the place in the part.</p>
+<h3 class="part-title">1. Randomized experiments</h3>
+<ol class="module-list">
+  <li><a href="randomization-inference.html">1.1 Randomization inference</a>
+    <p>How a small experiment gives an exact test from the random assignment alone. How the choice of test statistic changes the answer. How a series of tests gives a confidence interval.</p></li>
+  <li><a href="neyman.html">1.2 Neyman variance and blocking</a>
+    <p>How much an experimental estimate moves when the coin flips change. Why the Neyman standard error is too large on average when effects differ. What blocking changes.</p></li>
+</ol>
+<h3 class="part-title">2. Observational studies</h3>
+<ol class="module-list">
+  <li><a href="controls.html">2.1 Regression adjustment and good and bad controls</a>
+    <p>How adjusting for a confounder works in an observational study. Why one regression coefficient can miss the average effect. Which variables in a causal diagram should not be adjusted for.</p></li>
+</ol>
+<h3 class="part-title">3. Noncompliance</h3>
+<ol class="module-list">
+  <li><a href="iv.html">3.1 Noncompliance and instrumental variables</a>
+    <p>What a randomized swipe ad estimates when few customers swipe to the end. When the Wald estimate recovers the effect for compliers. How a direct effect of the ad, defiers, or a weak instrument change the estimate.</p></li>
+  <li><a href="principal-strata.html">3.2 Principal strata</a>
+    <p>Why a comparison among workers can mislead when a training program changes who works, and which comparison is fair.</p></li>
+</ol>
+<h3 class="part-title">4. Regression discontinuity</h3>
+<ol class="module-list">
+  <li><a href="rd.html">4.1 Regression discontinuity</a>
+    <p>How to estimate a jump at a cutoff. How the bandwidth, a curved outcome line, and manipulation of the score change the estimate.</p></li>
+</ol>
+<h3 class="part-title">5. Difference-in-differences</h3>
+<ol class="module-list">
+  <li><a href="did.html">5.1 Difference-in-differences</a>
+    <p>What the parallel trends assumption says, and what happens to the estimate when it fails.</p></li>
+  <li><a href="staggered.html">5.2 Staggered adoption</a>
+    <p>Why a two-way fixed effects regression can mislead when groups adopt a policy at different times and the effect changes over time. How to estimate the effect for each adoption group and period instead.</p></li>
+  <li><a href="event-study.html">5.3 Event study and placebo dates</a>
+    <p>How to read the estimates for the periods before and after a policy starts. How to rank the actual date against dates when nothing happened.</p></li>
+</ol>
+<h3 class="part-title">6. Prediction and decisions</h3>
+<ol class="module-list">
+  <li><a href="selective-labels.html">6.1 Selective labels</a>
+    <p>Why data produced by past decisions make it hard to judge a prediction model.</p></li>
+  <li><a href="uplift.html">6.2 Uplift targeting</a>
+    <p>Why the customers most likely to leave are not always the customers that an offer helps most.</p></li>
+</ol>
+
+<section class="prose" aria-labelledby="terms">
+<h2 id="terms">Key terms</h2>
+<p>The pages use these terms with these meanings. This site writes \(Y(1)\) and \(Y(0)\) for the potential outcomes and D for the treatment indicator (1 for treated units, 0 for untreated units). Some textbooks use other symbols, for example \(Y^1\) and \(Y^0\) (Cunningham 2021). \(E[\,\cdot\,]\) means the average over the whole population. A vertical bar means among: \(E[Y(0) \mid D = 1]\) is the average of \(Y(0)\) among the treated units.</p>
+<dl class="glossary">
+  <dt>Potential outcomes</dt>
+  <dd>Each unit (a person, a store, a firm) has two potential outcomes. Y(1) is its outcome with the treatment. Y(0) is its outcome without the treatment. After the unit receives the treatment or does not, we can observe at most one of the two. <span class="src">(Imbens and Rubin 2015, ch. 1)</span></dd>
+
+  <dt>No interference</dt>
+  <dd>Two potential outcomes per unit are enough only under two conditions. The treatment of one unit does not change the outcome of another unit. Every treated unit gets the same version of the treatment. This pair of conditions is called the stable unit treatment value assumption (SUTVA). For example, a funded supplier may require its own unfunded subcontractors to meet higher standards. Then the outcome of a subcontractor depends on the treatment of another firm. <span class="src">(Cunningham 2021, ch. 4)</span></dd>
+
+  <dt>Individual treatment effect</dt>
+  <dd>The difference between the two potential outcomes of one unit: Y(1) &minus; Y(0). <span class="src">(Cunningham 2021, ch. 4)</span></dd>
+
+  <dt>Fundamental problem of causal inference</dt>
+  <dd>Nobody can observe both potential outcomes of the same unit. So no individual treatment effect is ever observed directly. Holland gave the problem this name. <span class="src">(Holland 1986, p. 947)</span></dd>
+
+  <dt>Counterfactual outcome</dt>
+  <dd>The outcome that a unit would have had in the state that did not happen. For a treated unit, the counterfactual outcome is Y(0). For an untreated unit, it is Y(1). Nobody can observe a counterfactual outcome, so a study must estimate it, for example from a comparison group. The comparison group is a tool to estimate the counterfactual. It is not the counterfactual itself. <span class="src">(Cunningham 2021, ch. 4)</span></dd>
+
+  <dt>Average treatment effect (ATE)</dt>
+  <dd>The average of the individual treatment effects over the whole population: \(E[Y(1) - Y(0)]\). <span class="src">(Cunningham 2021, ch. 4)</span></dd>
+
+  <dt>Average treatment effect on the treated (ATT)</dt>
+  <dd>The average treatment effect among the units that received the treatment: \(E[Y(1) - Y(0) \mid D = 1]\). When effects differ across units and units choose the treatment based on the gains that they expect, the ATT usually differs from the ATE. <span class="src">(Cunningham 2021, ch. 4)</span></dd>
+
+  <dt>Sample and population average treatment effects (SATE and PATE)</dt>
+  <dd>The SATE is the average of the individual treatment effects among the units in a study. The PATE is the average in the larger population that the units come from. Imbens and Rubin call them the finite-sample and the super-population average treatment effects. The definition of the ATE above is the population version. Module 1.2 shows that the choice changes how much the estimate varies and whether the Neyman standard error is too large. <span class="src">(Imbens and Rubin 2015, ch. 6)</span></dd>
+
+  <dt>Conditional average treatment effect (CATE)</dt>
+  <dd>The average treatment effect among the units that share given characteristics \(X = x\): \(E[Y(1) - Y(0) \mid X = x]\). The characteristics X are measured before the treatment. When the effect differs from unit to unit, the CATE can differ from one group of units to another. Module 6.2 uses the CATE to decide which customers get an offer. <span class="src">(Huntington-Klein 2025, ch. 10)</span></dd>
+
+  <dt>Selection bias</dt>
+  <dd>The difference in the average untreated potential outcome, Y(0), between the treated group and the untreated group. In symbols, it is \(E[Y(0) \mid D = 1] - E[Y(0) \mid D = 0]\). It shows how far apart the average outcomes of the two groups would be if neither group received the treatment. The difference between the average outcome of the treated group and the average outcome of the untreated group equals the ATT plus the selection bias.</dd>
+  <dd>For example, suppose that a support fund accepts only suppliers that already meet high environmental standards. The funded suppliers would score higher even without the fund. A simple comparison of funded and unfunded suppliers then counts this old gap as an effect of the fund. <span class="src">(Angrist and Pischke 2009, ch. 2; Cunningham 2021, ch. 4)</span></dd>
+
+  <dt>Confounder, mediator, and collider</dt>
+  <dd>A causal diagram draws each variable as a node and each direct cause as an arrow. In such a diagram, a confounder is a common cause of the treatment and the outcome. A mediator lies on a causal path from the treatment to the outcome. A collider is a common effect of two variables on a path. The path is blocked at the collider unless a study adjusts for the collider.</dd>
+  <dd>Adjusting for a confounder removes bias. Adjusting for a mediator removes part of the effect, and adjusting for a collider creates bias. Some texts call the last bias selection bias. This site calls it collider bias and keeps the name selection bias for the term above. Module 2.1 shows each case. <span class="src">(Huntington-Klein 2025, ch. 8; Cinelli, Forney, and Pearl 2024)</span></dd>
+
+  <dt>Random assignment</dt>
+  <dd>Assignment of the treatment by a chance device, such as a coin flip. Who gets the treatment then has nothing to do with Y(1) or Y(0). So the treatment is independent of the potential outcomes, and the selection bias is zero. In any one experiment, the two groups can still differ by chance. <span class="src">(Angrist and Pischke 2009, ch. 2; Cunningham 2021, ch. 4)</span></dd>
+
+  <dt>Principal strata</dt>
+  <dd>Some variables can change because of the treatment, for example whether a person has a job after a training program. Each person then has two potential values of this variable: S(1) with the treatment and S(0) without it. A principal stratum is a group of people with the same pair of values. In the job example there are four strata. They are a job in both cases, a job in neither case, a job only with the program, and a job only without it.</dd>
+  <dd>The treatment cannot change the stratum of a person. So a comparison inside one stratum is a causal comparison. For example, a wage effect is well defined only for people who would have a job in both cases. Nobody can see which stratum a person belongs to, because each person shows only one of the two values. Module 3.2 explains the idea with this example, and Module 6.1 applies it to the decisions of judges. <span class="src">(Frangakis and Rubin 2002)</span></dd>
+
+  <dt>Local average treatment effect (LATE)</dt>
+  <dd>In an experiment where people choose whether to take the treatment, the random assignment can work as an instrumental variable. An instrumental variable changes who takes the treatment and changes the outcome only through the treatment. Compliers take the treatment when they are assigned to it and do not take it otherwise. The LATE is the average treatment effect for compliers.</dd>
+  <dd>The intention-to-treat (ITT) effect compares outcomes by assignment. Suppose that the assignment changes outcomes only through the treatment and that nobody does the opposite of the assignment. Then the ITT effect divided by the difference in the share treated equals the LATE. Module 3.1 shows this and what happens when the conditions fail. <span class="src">(Imbens and Rubin 2015, ch. 23 and 24)</span></dd>
+
+  <dt>Identification assumption</dt>
+  <dd>A condition about how the data were produced, usually about how the treatment was assigned. If the condition holds, a quantity that we could compute from observed data with an unlimited sample equals the causal quantity that we want. In a real sample, the estimate still differs from the causal quantity because of sampling error. Parallel trends in difference-in-differences is one example. These assumptions involve outcomes that nobody observes, so the data alone cannot fully confirm them. <span class="src">(Cunningham 2021, ch. 4; Hern&aacute;n and Robins 2020, sec. 10.1)</span></dd>
+
+  <dt>Estimand, estimator, estimate</dt>
+  <dd>The estimand is the quantity that we want to learn, for example the ATT. The estimator is a rule that turns any sample into a number. The estimate is the number that the rule gives in one particular sample. <span class="src">(Hern&aacute;n and Robins 2020, sec. 10.1)</span></dd>
+
+  <dt>Bias and sampling error</dt>
+  <dd>The error of an estimate is the estimate minus the true value. The bias of an estimator is its average over all possible samples minus the true value. So the bias is the part of the error that is the same in every sample. Sampling error is the rest of the error. It changes from sample to sample.</dd>
+  <dd>On the module pages, the readout <strong>Estimate minus true effect</strong> shows the error in the current sample. Draw many new samples, or set the noise to zero where a page has a noise slider, to see the bias. <span class="src">(Hern&aacute;n and Robins 2020, ch. 10)</span></dd>
+
+  <dt>p-value</dt>
+  <dd>A test statistic measures how far the data are from what a hypothesis predicts. Suppose that the hypothesis and every other assumption of the test are true. The p-value is then the probability of a test statistic at least as large as the one in the data. A p-value is not the probability that the hypothesis is true. <span class="src">(Greenland et al. 2016)</span></dd>
+
+  <dt>95% confidence interval</dt>
+  <dd>A range computed from the data by a rule. If the assumptions hold and the study is repeated many times, about 95% of the intervals from this rule contain the true value. One computed interval either contains the true value or does not. <span class="src">(Greenland et al. 2016)</span></dd>
+
+  <dt>Randomization inference</dt>
+  <dd>A test that uses the way the treatment was assigned. It computes the same statistic under every assignment that the design could have produced, the actual assignment included. Under the sharp null hypothesis, the treatment changes no unit&apos;s outcome, so the outcomes stay the same under every assignment. The p-value is the share of assignments whose statistic is at least as extreme as the actual statistic. The test needs no normal approximation. Module 1.1 explains the test in a small experiment, and Module 5.3 applies the same logic to dates. <span class="src">(Cunningham 2021, ch. 4)</span></dd>
+
+  <dt>Prediction question and causal question</dt>
+  <dd>A prediction question asks what will happen. A causal question asks what would change if someone acted. To decide whether to carry an umbrella, a person needs only a prediction of rain. To decide whether to perform a rain dance, the person needs to know whether the dance causes rain. A model can predict well and still give no answer to a causal question. Modules 6.1 and 6.2 show both kinds of questions. <span class="src">(Kleinberg et al. 2015)</span></dd>
+</dl>
+</section>
+
+<section class="refs prose" aria-labelledby="refs">
+<h2 id="refs">References for the key terms</h2>
+<ol>
+  <li>Angrist, J. D., &amp; Pischke, J.-S. (2009). <cite>Mostly harmless econometrics: An empiricist&apos;s companion</cite>. Princeton University Press. Chapter 2, The Experimental Ideal. <a href="https://doi.org/10.1515/9781400829828">https://doi.org/10.1515/9781400829828</a></li>
+  <li>Cinelli, C., Forney, A., &amp; Pearl, J. (2024). A crash course in good and bad controls. <cite>Sociological Methods &amp; Research, 53</cite>(3), 1071-1104. <a href="https://doi.org/10.1177/00491241221099552">https://doi.org/10.1177/00491241221099552</a></li>
+  <li>Cunningham, S. (2021). <cite>Causal inference: The mixtape</cite>. Yale University Press. Chapter 4, Potential Outcomes Causal Model. <a href="https://doi.org/10.2307/j.ctv1c29t27">https://doi.org/10.2307/j.ctv1c29t27</a>. Free online first edition: <a href="https://mixtape-1ed.netlify.app/04-potential_outcomes.html">chapter 4</a>.</li>
+  <li>Frangakis, C. E., &amp; Rubin, D. B. (2002). Principal stratification in causal inference. <cite>Biometrics, 58</cite>(1), 21-29. <a href="https://doi.org/10.1111/j.0006-341X.2002.00021.x">https://doi.org/10.1111/j.0006-341X.2002.00021.x</a></li>
+  <li>Greenland, S., Senn, S. J., Rothman, K. J., Carlin, J. B., Poole, C., Goodman, S. N., &amp; Altman, D. G. (2016). Statistical tests, P values, confidence intervals, and power: A guide to misinterpretations. <cite>European Journal of Epidemiology, 31</cite>(4), 337-350. <a href="https://doi.org/10.1007/s10654-016-0149-3">https://doi.org/10.1007/s10654-016-0149-3</a></li>
+  <li>Hern&aacute;n, M. A., &amp; Robins, J. M. (2020). <cite>Causal inference: What if</cite>. Chapman &amp; Hall/CRC. Chapter 10, Random variability (section 10.1, Identification versus estimation). <a href="https://miguelhernan.org/whatifbook">https://miguelhernan.org/whatifbook</a></li>
+  <li>Holland, P. W. (1986). Statistics and causal inference. <cite>Journal of the American Statistical Association, 81</cite>(396), 945-960. <a href="https://doi.org/10.1080/01621459.1986.10478354">https://doi.org/10.1080/01621459.1986.10478354</a></li>
+  <li>Huntington-Klein, N. (2025). <cite>The effect: An introduction to research design and causality</cite> (2nd ed.). Chapman &amp; Hall. Chapter 8, Causal Paths and Closing Back Doors, and chapter 10, Treatment Effects. Free online edition: <a href="https://theeffectbook.net/ch-CausalPaths.html">chapter 8</a> and <a href="https://theeffectbook.net/ch-TreatmentEffects.html">chapter 10</a>.</li>
+  <li>Imbens, G. W., &amp; Rubin, D. B. (2015). <cite>Causal inference for statistics, social, and biomedical sciences: An introduction</cite>. Cambridge University Press. Chapter 1, Causality: The Basic Framework; chapter 6, Neyman&apos;s Repeated Sampling Approach to Completely Randomized Experiments; chapter 23, Instrumental Variables Analysis of Randomized Experiments with One-Sided Noncompliance; and chapter 24, Instrumental Variables Analysis of Randomized Experiments with Two-Sided Noncompliance. <a href="https://doi.org/10.1017/CBO9781139025751">https://doi.org/10.1017/CBO9781139025751</a></li>
+  <li>Kleinberg, J., Ludwig, J., Mullainathan, S., &amp; Obermeyer, Z. (2015). Prediction policy problems. <cite>American Economic Review, 105</cite>(5), 491-495. <a href="https://doi.org/10.1257/aer.p20151023">https://doi.org/10.1257/aer.p20151023</a></li>
+</ol>
+</section>
+
+<section class="prose" aria-labelledby="about">
+<h2 id="about">About these pages</h2>
+<p>All data on this site are simulated in your browser. The pages need no installation. The simulations use fixed random seeds. So the same settings and the same sample number always give the same data.</p>
+</section>
+</main>
+
+<footer class="site-footer"><div class="inner">
+<p>All data on this site are simulated in your browser.</p>
+<p>Made by <a href="https://j1yoo.github.io/">Jaewon Yoo</a>, National Tsing Hua University. Code: <a href="https://polyformproject.org/licenses/noncommercial/1.0.0">PolyForm Noncommercial 1.0.0</a>. Text: <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/">Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 (CC BY-NC-ND 4.0)</a>.</p>
+</div></footer>
+<script src="assets/js/core/analytics.js"></script>
+<script src="assets/vendor/katex/katex.min.js"></script>
+<script src="assets/vendor/katex/auto-render.min.js"></script>
+<script src="assets/js/core/math.js"></script>
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neyman variance and blocking | Causal Playground</title>
+<meta name="description" content="Interactive simulation: the spread of an experimental estimate over repeated coin flips, why the Neyman standard error is conservative, and what blocking changes.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/vendor/katex/katex.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+  /* Page styles that style.css does not have. */
+  @media (max-width: 560px) { #bk-seg-table { font-size: 0.8rem; } #bk-seg-table th, #bk-seg-table td { padding: 4px 3px; } }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><div class="inner">
+  <a class="site-title" href="index.html">Causal Playground</a>
+  <nav class="site-nav" aria-label="Modules">
+    <span class="nav-part"><span class="nav-part-name">1 Randomized experiments</span> <a href="randomization-inference.html">Randomization inference</a> <a href="neyman.html" aria-current="page">Neyman and blocking</a></span>
+    <span class="nav-part"><span class="nav-part-name">2 Observational studies</span> <a href="controls.html">Regression and controls</a></span>
+    <span class="nav-part"><span class="nav-part-name">3 Noncompliance</span> <a href="iv.html">Instrumental variables</a> <a href="principal-strata.html">Principal strata</a></span>
+    <span class="nav-part"><span class="nav-part-name">4 Regression discontinuity</span> <a href="rd.html">Sharp design</a></span>
+    <span class="nav-part"><span class="nav-part-name">5 Difference-in-differences</span> <a href="did.html">Parallel trends</a> <a href="staggered.html">Staggered adoption</a> <a href="event-study.html">Event study</a></span>
+    <span class="nav-part"><span class="nav-part-name">6 Prediction and decisions</span> <a href="selective-labels.html">Selective labels</a> <a href="uplift.html">Uplift targeting</a></span>
+  </nav>
+</div></header>
+
+<main id="main">
+<p class="kicker">1.2 Randomized experiments</p>
+<h1>Neyman variance and blocking: how much an estimate moves when the coin flips change</h1>
+<p class="lede">In an experiment, the estimate depends on which units the coin flips put in the treated group. This page shows how much the estimate moves from one set of coin flips to another. It also shows why the Neyman standard error overstates this movement when effects differ across units, and when blocking makes the estimate more precise.</p>
+
+<section class="prose" aria-labelledby="brief">
+<h2 id="brief">In brief</h2>
+<p>A shop sends a discount offer to a random half of its customers. A computer draws which half gets the offer, and this page calls this draw the coin flips. The difference between the mean spending of the two groups estimates the effect of the offer.</p>
+<ul>
+<li>The <strong>sample average treatment effect (SATE)</strong> is the average effect among the customers in the experiment. The <strong>population average treatment effect (PATE)</strong> is the average effect in the larger population that the customers come from.</li>
+<li>The <strong>true standard deviation of the estimate</strong> measures how much the estimate moves from one experiment to the next. Only a simulation knows it.</li>
+<li>The <strong>Neyman standard error</strong> estimates this movement from the data of one experiment. It equals the robust standard error HC2 (heteroskedasticity-consistent standard error of type 2) of a regression.</li>
+<li>The <strong>classical standard error</strong> of a regression assumes that the outcome has the same variance in both groups.</li>
+<li>In Part 2, <strong>blocking</strong> runs the coin flips inside each customer segment. Estimator C averages the segment estimates, weighted by segment size.</li>
+</ul>
+<p>Move the sliders and watch these numbers. The explanation below the simulation gives the reasons.</p>
+</section>
+
+<section aria-labelledby="try">
+<h2 id="try">Try it</h2>
+<p class="prose">The simulation draws customers with both potential outcomes. Part 1 repeats the coin flips on the same customers. Part 2 sorts the customers into four segments and compares two designs.</p>
+<details class="symbols" id="ny-sim-details">
+<summary>How the simulation makes the data</summary>
+<p>In Part 1, spending without the offer is drawn around 40 dollars with a standard deviation of 10. The offer adds an individual effect to each customer's spending. The effects average 10 dollars in the population and differ across customers by the spread slider. All amounts on this page are in dollars.</p>
+</details>
+
+<div class="sim">
+<h3>Part 1. The same customers, new coin flips</h3>
+<p class="prose">The page repeats the experiment 1,000 times. Each time, a new set of coin flips decides who gets the offer, and the page computes the estimate and both standard errors.</p>
+<div class="sim-grid">
+<form id="ny-controls" class="controls" aria-label="Settings for part 1">
+  <div class="control">
+    <label for="ny-n">Number of customers <output for="ny-n"></output></label>
+    <input type="range" id="ny-n" name="n" min="20" max="400" step="20" value="100" data-format="int">
+  </div>
+  <div class="control">
+    <label for="ny-share">Share of customers who get the offer <output for="ny-share"></output></label>
+    <input type="range" id="ny-share" name="share" min="0.2" max="0.8" step="0.05" value="0.5" data-format="pct">
+  </div>
+  <div class="control">
+    <label for="ny-spread">Spread of the individual effects (standard deviation, dollars) <output for="ny-spread"></output></label>
+    <input type="range" id="ny-spread" name="spread" min="0" max="30" step="1" value="20">
+    <p class="hint">At 0, every customer has an effect of 10 dollars.</p>
+  </div>
+  <div class="control">
+    <label for="ny-target">What changes from one experiment to the next</label>
+    <select id="ny-target" name="target">
+      <option value="sate" selected>Only the coin flips (SATE)</option>
+      <option value="pate">New customers and coin flips (PATE)</option>
+    </select>
+  </div>
+  <div class="button-row">
+    <button type="button" id="ny-new">Draw a new sample</button>
+    <button type="reset">Reset</button>
+    <span class="sample-label" id="ny-sample"></span>
+  </div>
+</form>
+<figure class="chart">
+  <ul class="legend" id="ny-legend"></ul>
+  <svg id="ny-chart"></svg>
+  <figcaption>The bars count the estimates from the 1,000 repeated experiments, and real data show only one of them. The three curves are normal (bell-shaped) curves centered on the true target, which the dashed vertical line marks. The dashed curve uses the true standard deviation of the estimate, and the two solid curves use the average of each standard error. A curve that is wider than the bars belongs to a standard error that is too large. At a share of 50%, the two standard errors are equal, so the orange curve covers the green one. Hover over a bar to see its count.</figcaption>
+</figure>
+</div>
+<dl class="readout">
+  <div><dt id="ny-r-target-name">True SATE</dt><dd id="ny-r-target"></dd></div>
+  <div><dt>Average of the 1,000 estimates</dt><dd id="ny-r-mean"></dd></div>
+  <div><dt>True standard deviation of the estimate (simulation only)</dt><dd id="ny-r-sd"></dd></div>
+  <div><dt>Average Neyman standard error (equal to HC2)</dt><dd id="ny-r-neyman"></dd></div>
+  <div><dt>Average classical standard error</dt><dd id="ny-r-classical"></dd></div>
+  <div><dt>95% intervals with the Neyman standard error that contain the target</dt><dd id="ny-r-covn"></dd></div>
+  <div><dt>95% intervals with the classical standard error that contain the target</dt><dd id="ny-r-covc"></dd></div>
+  <div><dt>Customers with and without the offer</dt><dd id="ny-r-groups"></dd></div>
+</dl>
+<div class="results-wrap">
+<table class="results">
+  <caption>Parts of the true variance of the estimate (simulation only)</caption>
+  <thead><tr><th scope="col">Part</th><th scope="col">Value</th></tr></thead>
+  <tbody>
+    <tr><td id="ny-v-label-1">S1² / n1</td><td id="ny-v-1"></td></tr>
+    <tr><td id="ny-v-label-0">S0² / n0</td><td id="ny-v-0"></td></tr>
+    <tr><td>Variance of the individual effects divided by n (subtracted)</td><td id="ny-v-tau"></td></tr>
+    <tr class="key"><td>True variance of the estimate</td><td id="ny-v-total"></td></tr>
+    <tr><td>Average of the Neyman variance estimate over all possible experiments</td><td id="ny-v-neyman"></td></tr>
+  </tbody>
+</table>
+<p class="hint">The variances are in squared dollars. The square root of the true variance is the true standard deviation in the readout. When the customers also change (target: PATE), the table does not subtract the variance of the individual effects. Then the true variance equals the average of the Neyman variance estimate. The table rounds each number to two decimals. The SATE, the 95% confidence interval, and other terms are defined in the <a href="index.html#terms">key terms</a> on the home page.</p>
+</div>
+</div>
+
+<div class="sim">
+<h3>Part 2. Blocking by customer segment</h3>
+<p class="prose">The shop has four segments of the same size: new, occasional, regular, and loyal customers. Average spending without the offer rises from one segment to the next by the gap slider. The page compares two designs on the same customers. Complete randomization gives the offer to the same total number of customers, drawn from all segments together. Block randomization draws the treated customers inside each segment. The page repeats each design 2,000 times.</p>
+<div class="sim-grid">
+<form id="bk-controls" class="controls" aria-label="Settings for part 2">
+  <div class="control">
+    <label for="bk-gap">Spending gap between neighboring segments (dollars) <output for="bk-gap"></output></label>
+    <input type="range" id="bk-gap" name="gap" min="0" max="30" step="1" value="15">
+    <p class="hint">Inside a segment, spending has a standard deviation of 10 dollars.</p>
+  </div>
+  <div class="control">
+    <label for="bk-share">Rise in the treated share across segments <output for="bk-share"></output></label>
+    <input type="range" id="bk-share" name="shareStep" min="0" max="0.4" step="0.05" value="0" data-format="pct">
+    <p class="hint">New customers always have a treated share of 50%. The share rises about evenly up to the loyal customers, who get about 50% plus this value. The table shows the actual counts.</p>
+  </div>
+  <div class="control">
+    <label for="bk-eff">Effect difference between neighboring segments (dollars) <output for="bk-eff"></output></label>
+    <input type="range" id="bk-eff" name="effectStep" min="0" max="10" step="1" value="0">
+    <p class="hint">The effect rises from new to loyal customers. Its average over the four segments stays 10 dollars.</p>
+  </div>
+  <div class="control">
+    <label for="bk-n">Number of customers <output for="bk-n"></output></label>
+    <input type="range" id="bk-n" name="n" min="40" max="400" step="40" value="200" data-format="int">
+  </div>
+  <div class="button-row">
+    <button type="button" id="bk-new">Draw a new sample</button>
+    <button type="reset">Reset</button>
+    <span class="sample-label" id="bk-sample"></span>
+  </div>
+</form>
+<figure class="chart">
+  <ul class="legend" id="bk-legend"></ul>
+  <svg id="bk-chart"></svg>
+  <figcaption>Each dot is the average of the estimates from one estimator over the 2,000 repeated experiments. Each vertical line covers the middle 95% of its estimates. A shorter line means a more precise estimator. A dot away from the dashed line means a biased estimator. Hover over a dot to see its values.</figcaption>
+</figure>
+</div>
+<div class="results-wrap">
+<table class="results">
+  <caption>The four estimators over 2,000 repeated experiments</caption>
+  <thead><tr><th scope="col">Design and estimator</th><th scope="col">Average estimate</th><th scope="col">Average minus true SATE</th><th scope="col">Standard deviation</th></tr></thead>
+  <tbody>
+    <tr><td><span class="swatch s3"></span>A. Complete randomization: difference in means</td><td id="bk-complete-mean"></td><td id="bk-complete-bias"></td><td id="bk-complete-sd"></td></tr>
+    <tr><td><span class="swatch s2"></span>B. Block randomization: difference in means that ignores the segments</td><td id="bk-pooled-mean"></td><td id="bk-pooled-bias"></td><td id="bk-pooled-sd"></td></tr>
+    <tr><td><span class="swatch s1"></span>C. Block randomization: segment estimates weighted by segment size</td><td id="bk-block-mean"></td><td id="bk-block-bias"></td><td id="bk-block-sd"></td></tr>
+    <tr><td><span class="swatch s4"></span>D. Block randomization: regression with segment fixed effects</td><td id="bk-fe-mean"></td><td id="bk-fe-bias"></td><td id="bk-fe-sd"></td></tr>
+  </tbody>
+</table>
+</div>
+<div class="results-wrap">
+<table class="results" id="bk-seg-table">
+  <caption>The segments and the weights of estimators C and D</caption>
+  <thead><tr><th scope="col">Segment</th><th scope="col">New</th><th scope="col">Occasional</th><th scope="col">Regular</th><th scope="col">Loyal</th></tr></thead>
+  <tbody>
+    <tr><td>Treated customers</td><td id="bk-s0-treated"></td><td id="bk-s1-treated"></td><td id="bk-s2-treated"></td><td id="bk-s3-treated"></td></tr>
+    <tr><td>Spending without the offer</td><td id="bk-s0-mean0"></td><td id="bk-s1-mean0"></td><td id="bk-s2-mean0"></td><td id="bk-s3-mean0"></td></tr>
+    <tr><td>True effect</td><td id="bk-s0-effect"></td><td id="bk-s1-effect"></td><td id="bk-s2-effect"></td><td id="bk-s3-effect"></td></tr>
+    <tr><td>Weight in C</td><td id="bk-s0-wb"></td><td id="bk-s1-wb"></td><td id="bk-s2-wb"></td><td id="bk-s3-wb"></td></tr>
+    <tr><td>Weight in D</td><td id="bk-s0-wfe"></td><td id="bk-s1-wfe"></td><td id="bk-s2-wfe"></td><td id="bk-s3-wfe"></td></tr>
+  </tbody>
+</table>
+<p class="hint">Each segment has the same number of customers. The spending without the offer is the segment average that the simulation uses, and the true effect is the effect that the simulation adds. Only a simulation knows them. Estimator C weights each segment by its share of the customers. Estimator D weights it by its size times p(1 &minus; p), where p is its treated share, scaled to add up to 100%.</p>
+</div>
+<dl class="readout">
+  <div><dt>True SATE (simulation only)</dt><dd id="bk-r-sate"></dd></div>
+  <div><dt>Average of the true segment effects with the weights of D (simulation only)</dt><dd id="bk-r-fe"></dd></div>
+</dl>
+</div>
+<noscript><p class="noscript">The simulation needs JavaScript. The text on this page still explains the method.</p></noscript>
+</section>
+
+<aside class="notice" aria-labelledby="notice">
+<h2 id="notice">What to notice</h2>
+<ul>
+  <li>At the default settings, the individual effects have a standard deviation of 20 dollars. The orange curve with the Neyman standard error is wider than the bars. The average Neyman standard error is 3.61, and the true standard deviation is 2.92. So 98.1% of the intervals contain the SATE. Set the spread to 0. The curves now match the bars, and the share falls to about 95%.</li>
+  <li>Set the spread back to 20, and in the menu choose the target PATE. The bars widen until they match the orange curve, and about 95% of the Neyman intervals contain the PATE. In the table, the true variance now equals the average of the Neyman variance estimate.</li>
+  <li>Choose the target SATE again and set the share who get the offer to 20%. The green curve with the classical standard error becomes narrower than the bars, and only about 82% of the classical intervals contain the SATE. The Neyman intervals still contain it about 96% of the time. At a share of 50%, the two standard errors are equal.</li>
+  <li>In Part 2, the segment estimates weighted by segment size (C) have a standard deviation of 1.46, compared with 2.71 under complete randomization (A). Move the gap to 0: the two designs now spread about the same (1.46 and 1.43). Move it to 30: complete randomization spreads to 4.91, while blocking stays at 1.46.</li>
+  <li>Set the gap back to 15 and the rise in the treated share to 40%. The difference in means that ignores the segments (B) now averages 21.45, while the SATE is 10.00, because the treated group holds more loyal customers. Estimator C still averages 10.04. Then set the effect difference to 10. The fixed effects regression (D) falls to 6.54. The weights table shows why: D gives new and occasional customers, who have the smallest effects, more weight than their share.</li>
+</ul>
+</aside>
+
+<section class="prose" aria-labelledby="idea">
+<h2 id="idea">The idea</h2>
+<p>A shop sends a discount offer to a random half of 100 customers. A computer draws which half gets the offer, and this page calls this draw the coin flips. We call the customers who get the offer the treated group and the others the comparison group. The outcome is the amount that each customer spends in the next month. The difference between the mean spending of the two groups estimates the effect of the offer.</p>
+<p>Two targets are common. The <strong>sample average treatment effect (SATE)</strong> is the average effect among the 100 customers in the experiment. The <strong>population average treatment effect (PATE)</strong> is the average effect in the larger population that the customers come from (Imbens and Rubin 2015, ch. 6).</p>
+<p>Each customer has two potential outcomes: \(Y(1)\), the spending with the offer, and \(Y(0)\), the spending without it. Neyman looked at the SATE in this way: keep the 100 customers and both of their potential outcomes fixed. Then let only the coin flips change. Over all possible coin flips, the difference in means averages to the SATE, so it is unbiased (Splawa-Neyman 1990; Imbens and Rubin 2015, ch. 6). Neyman derived its variance over the coin flips:</p>
+<p class="formula">\[\frac{S_1^2}{n_1} + \frac{S_0^2}{n_0} - \frac{S_\tau^2}{n}\]</p>
+<p>Here \(n_1\) customers get the offer, \(n_0\) do not, and \(n = n_1 + n_0\). \(S_1^2\) and \(S_0^2\) are the variances of \(Y(1)\) and \(Y(0)\) among the n customers. \(S_\tau^2\) is the variance of their individual effects. The data show each customer under one condition only. So the data can estimate \(S_1^2\) from the treated group and \(S_0^2\) from the comparison group. But they cannot estimate \(S_\tau^2\).</p>
+<p>The <strong>Neyman standard error</strong> is the square root of \(s_1^2/n_1 + s_0^2/n_0\). Here \(s_1^2\) and \(s_0^2\) are the sample variances of the outcome in the two groups. It leaves out the last term of the formula. So its square, the variance estimate, is too large on average unless every customer has the same effect. In large samples, a 95% confidence interval built with it then contains the SATE in more than 95% of the experiments. Such an interval is called conservative.</p>
+<details class="symbols" id="ny-variance-symbols">
+<summary>The difference in means and its variance in symbols</summary>
+<p>\(D_i\) is 1 if customer \(i\) gets the offer. The difference in means is</p>
+<p class="formula">\[\hat\tau = \frac{1}{n_1} \sum D_i Y_i - \frac{1}{n_0} \sum (1 - D_i) Y_i\]</p>
+<p>With the \(n\) customers held fixed, \(E_D[\hat\tau] = \text{SATE}\), where \(E_D\) averages over the coin flips only. The variance over the coin flips is</p>
+<p class="formula">\[\begin{aligned} V_D(\hat\tau) &= \frac{S_1^2}{n_1} + \frac{S_0^2}{n_0} - \frac{S_\tau^2}{n}, \\ \text{while} \quad E_D\Big[\frac{s_1^2}{n_1} + \frac{s_0^2}{n_0}\Big] &= \frac{S_1^2}{n_1} + \frac{S_0^2}{n_0} \end{aligned}\]</p>
+</details>
+<p>Now suppose that the customers are a random sample from a large population and that the target is the PATE. The random draw of the customers then adds variance. So the same standard error is correct on average (Imbens and Rubin 2015, ch. 6).</p>
+<details class="symbols" id="ny-regression-details">
+<summary>Standard errors from a regression</summary>
+<p>A regression of the outcome on an intercept and the treatment indicator gives the same estimate. Its standard error depends on the option that the software uses. The classical standard error assumes that the outcome has the same variance in both groups. It is wrong when the groups differ both in size and in variance. A robust standard error allows the variance of the outcome to differ between the groups. One version, HC2 (heteroskedasticity-consistent standard error of type 2), equals the Neyman standard error exactly (Ding 2024, ch. 4).</p>
+</details>
+<p><strong>Blocking</strong> sorts the customers into groups of similar customers before the coin flips, for example new, occasional, regular, and loyal customers. These groups are the blocks, or segments. The coin flips then happen inside each segment. This design is a block randomized experiment, also called a stratified randomized experiment. The estimate is the difference in means inside each segment, averaged with weights equal to the segment shares of the customers. Its variance is the sum of the segment variances, each multiplied by the squared weight (Imbens and Rubin 2015, ch. 9).</p>
+<p>In symbols, with blocks \(j = 1, \ldots, J\) of sizes \(n_j\) and segment estimates \(\hat\tau_j\), the block estimator is</p>
+<p class="formula">\[\begin{aligned} & \hat\tau_B = \sum \frac{n_j}{n} \hat\tau_j, \\ & \text{with variance } \sum \Big(\frac{n_j}{n}\Big)^2 V(\hat\tau_j) \end{aligned}\]</p>
+<p>Blocking removes the differences between the segments from the variance of the estimate. If the segments differ in average spending by large amounts and the customers inside a segment are similar, the estimate becomes more precise. If the segments do not predict spending, blocking gives no gain, and in a small sample it can lose a little precision (Ding 2024, ch. 5).</p>
+<details class="symbols" id="ny-shares-details">
+<summary>Different treated shares across segments and the fixed effects regression</summary>
+<p>Some designs give the offer to different shares of customers in different segments, for example to more of the loyal customers. Then the difference in means that ignores the segments is biased. The treated group holds more loyal customers, and loyal customers spend more even without the offer. The weighted average of the segment estimates stays unbiased.</p>
+<p>A regression with a separate intercept for each segment, called segment fixed effects, also removes the differences between segments. This regression weights the segment estimates by \(n_j p_j (1 - p_j)\). Here \(n_j\) is the size of segment j, and \(p_j\) is its treated share (Angrist 1998). In symbols, the fixed effects coefficient equals</p>
+<p class="formula">\[\frac{\sum \omega_j \hat\tau_j}{\sum \omega_j} \quad \text{with} \quad \omega_j = n_j p_j (1 - p_j)\]</p>
+<p>These weights favor segments with a treated share near one half. Suppose that the effect differs across segments and that these weights differ from the segment shares. Then the regression estimates a weighted average of the segment effects that differs from the SATE.</p>
+</details>
+</section>
+
+<section class="refs prose" aria-labelledby="refs">
+<h2 id="refs">References</h2>
+<ol id="ny-refs">
+  <li>Angrist, J. D. (1998). Estimating the labor market impact of voluntary military service using Social Security data on military applicants. <cite>Econometrica, 66</cite>(2), 249-288. <a href="https://doi.org/10.2307/2998558">https://doi.org/10.2307/2998558</a></li>
+  <li>Ding, P. (2024). <cite>A first course in causal inference</cite>. Chapman &amp; Hall/CRC. Chapter 4, Neymanian Repeated Sampling Inference in Completely Randomized Experiments, and chapter 5, Stratification and Post-Stratification in Randomized Experiments. <a href="https://doi.org/10.1201/9781003484080">https://doi.org/10.1201/9781003484080</a>. Free author version: <a href="https://arxiv.org/abs/2305.18793">arXiv:2305.18793</a>.</li>
+  <li>Imbens, G. W., &amp; Rubin, D. B. (2015). <cite>Causal inference for statistics, social, and biomedical sciences: An introduction</cite>. Cambridge University Press. Chapter 6, Neyman&apos;s Repeated Sampling Approach to Completely Randomized Experiments, and chapter 9, Stratified Randomized Experiments. <a href="https://doi.org/10.1017/CBO9781139025751">https://doi.org/10.1017/CBO9781139025751</a></li>
+  <li>Splawa-Neyman, J. (1990). On the application of probability theory to agricultural experiments. Essay on principles. Section 9 (D. M. Dabrowska &amp; T. P. Speed, Trans.). <cite>Statistical Science, 5</cite>(4), 465-472. <a href="https://doi.org/10.1214/ss/1177012031">https://doi.org/10.1214/ss/1177012031</a> (Original work published 1923)</li>
+</ol>
+</section>
+
+<nav class="pager" aria-label="Module pages">
+  <a href="randomization-inference.html">Previous: 1.1 Randomization inference</a>
+  <a href="controls.html">Next: 2.1 Regression adjustment and good and bad controls</a>
+</nav>
+</main>
+
+<footer class="site-footer"><div class="inner">
+<p>All data on this site are simulated in your browser.</p>
+<p>Made by <a href="https://j1yoo.github.io/">Jaewon Yoo</a>, National Tsing Hua University. Code: <a href="https://polyformproject.org/licenses/noncommercial/1.0.0">PolyForm Noncommercial 1.0.0</a>. Text: <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/">Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 (CC BY-NC-ND 4.0)</a>.</p>
+</div></footer>
+<script src="assets/js/core/analytics.js"></script>
+<script src="assets/vendor/katex/katex.min.js"></script>
+<script src="assets/vendor/katex/auto-render.min.js"></script>
+<script src="assets/js/core/math.js"></script>
+<script src="assets/js/core/rng.js"></script>
+<script src="assets/js/core/stats.js"></script>
+<script src="assets/js/core/plot.js"></script>
+<script src="assets/js/core/ui.js"></script>
+<script src="assets/js/sims/neyman.js"></script>
+<script src="assets/js/pages/neyman-page.js"></script>
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uplift targeting | Causal Playground</title>
+<meta name="description" content="Interactive simulation: send a retention offer to the customers with the highest predicted churn risk or to the customers with the highest predicted uplift.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/vendor/katex/katex.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+  /* Page styles: the table of the four kinds of customers holds words, so its cells align left. */
+  #up-kinds th, #up-kinds td { text-align: left; }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><div class="inner">
+  <a class="site-title" href="index.html">Causal Playground</a>
+  <nav class="site-nav" aria-label="Modules">
+    <span class="nav-part"><span class="nav-part-name">1 Randomized experiments</span> <a href="randomization-inference.html">Randomization inference</a> <a href="neyman.html">Neyman and blocking</a></span>
+    <span class="nav-part"><span class="nav-part-name">2 Observational studies</span> <a href="controls.html">Regression and controls</a></span>
+    <span class="nav-part"><span class="nav-part-name">3 Noncompliance</span> <a href="iv.html">Instrumental variables</a> <a href="principal-strata.html">Principal strata</a></span>
+    <span class="nav-part"><span class="nav-part-name">4 Regression discontinuity</span> <a href="rd.html">Sharp design</a></span>
+    <span class="nav-part"><span class="nav-part-name">5 Difference-in-differences</span> <a href="did.html">Parallel trends</a> <a href="staggered.html">Staggered adoption</a> <a href="event-study.html">Event study</a></span>
+    <span class="nav-part"><span class="nav-part-name">6 Prediction and decisions</span> <a href="selective-labels.html">Selective labels</a> <a href="uplift.html" aria-current="page">Uplift targeting</a></span>
+  </nav>
+</div></header>
+
+<main id="main">
+<p class="kicker">6.2 Prediction and decisions</p>
+<h1>Prediction versus uplift: whom should a retention offer target?</h1>
+<p class="lede">A customer churns when the customer leaves a firm. A firm can send a retention offer, such as a discount, to keep customers from churning. This page compares two rules for who gets the offer: the customers with the highest predicted churn risk, or the largest predicted drop in churn.</p>
+
+<section class="prose" aria-labelledby="brief">
+<h2 id="brief">In brief</h2>
+<p>A retention offer costs money, so a firm can send it to only a share of its customers. This share is the budget. The firm first runs a pilot experiment, in which a coin flip decides who gets the offer. Then it uses the pilot to choose which new customers get the offer.</p>
+<ul>
+<li>The <strong>churn risk</strong> of a customer is the probability that the customer leaves without the offer.</li>
+<li>The <strong>uplift</strong> of a customer is the churn probability without the offer minus the churn probability with the offer. A negative uplift means that the offer raises churn.</li>
+<li><strong>Risk targeting</strong> sends the offer to the customers with the highest predicted churn risk. <strong>Uplift targeting</strong> sends it to the customers with the highest predicted uplift.</li>
+<li>The number of <strong>churners prevented per 1,000 customers</strong> is the sum of the true uplift over the targeted customers, per 1,000 new customers. Customers with a negative uplift count against this number.</li>
+</ul>
+<p>Move the sliders and watch these numbers. The explanation below the simulation gives the reasons.</p>
+</section>
+
+<section aria-labelledby="try">
+<h2 id="try">Try it</h2>
+<p class="prose">The simulation has a pilot experiment and 20,000 new customers. The firm fits a churn model and an uplift model on the pilot. Then it ranks the new customers by predicted churn risk and by predicted uplift, and it targets the top share of each ranking.</p>
+<details class="symbols" id="up-sim-details">
+<summary>How the simulation makes the data</summary>
+<p>Each customer has two characteristics. The first one drives the churn risk. The second one drives the response to the offer. The link between churn risk and response is the correlation between the two characteristics. The first slider sets it.</p>
+<p>In symbols, write \(x_1\) and \(x_2\) for the two characteristics. The simulation draws \(x_1\) and \(v\) from the standard normal distribution and sets</p>
+<p class="formula">\[x_2 = \rho x_1 + \sqrt{1 - \rho^2}\, v\]</p>
+<p>So \(\rho\) is the correlation between \(x_1\) and \(x_2\).</p>
+<p>The response of a customer is the <strong>strength</strong> of the offer for that customer. The strength is the amount by which the offer lowers the log odds of churn. The odds of churn are the churn probability divided by the probability of staying. The log odds are the natural logarithm of the odds. A negative strength means that the offer raises churn.</p>
+<p>Write \(p_0\) and \(p_1\) for the churn probabilities without and with the offer. With \(\operatorname{logit}(p) = \log(p / (1 - p))\), the log odds of churn are</p>
+<p class="formula">\[\begin{aligned} \operatorname{logit} p_0 &= −1.2 + 1.2 x_1 \quad \text{and} \\ \operatorname{logit} p_1 &= \operatorname{logit} p_0 - (d_0 + d_1 x_2) \end{aligned}\]</p>
+<p>The strength of the offer for a customer is \(d_0 + d_1 x_2\). It can be negative, so the offer can raise churn for some customers.</p>
+<p>The simulation knows the churn probability of every new customer with and without the offer. So it knows the true uplift of each new customer, which real data never show. The sum of the true uplift over the targeted customers is the expected number of churners that the offer prevents. Customers with a negative uplift count against this number. The page reports it per 1,000 new customers.</p>
+</details>
+<div class="sim">
+<div class="sim-grid">
+<form id="up-controls" class="controls" aria-label="Simulation settings">
+  <div class="control">
+    <label for="up-rho">Link between churn risk and response to the offer <output for="up-rho"></output></label>
+    <input type="range" id="up-rho" name="rho" min="-0.9" max="0.9" step="0.1" value="-0.1">
+    <p class="hint">The correlation between the two characteristics. Below 0, customers with a high churn risk tend to respond less to the offer.</p>
+  </div>
+  <div class="control">
+    <label for="up-d0">Average strength of the offer <output for="up-d0"></output></label>
+    <input type="range" id="up-d0" name="d0" min="0" max="1.5" step="0.05" value="0.5">
+    <p class="hint">The offer lowers the log odds of churn by this amount for a customer whose second characteristic is at its average. The uplift in probability also depends on the churn risk of the customer.</p>
+  </div>
+  <div class="control">
+    <label for="up-d1">How much the response differs across customers <output for="up-d1"></output></label>
+    <input type="range" id="up-d1" name="d1" min="0" max="1.5" step="0.05" value="0.8">
+    <p class="hint">At 0, the offer lowers the log odds of churn by the same amount for every customer. The uplift in probability still differs from customer to customer, because it depends on the churn risk. With larger values, the offer is strong for some customers and raises churn for others.</p>
+  </div>
+  <div class="control">
+    <label for="up-budget">Share of customers the firm can target <output for="up-budget"></output></label>
+    <input type="range" id="up-budget" name="budget" min="0.05" max="0.6" step="0.01" value="0.2" data-format="pct">
+  </div>
+  <div class="control">
+    <label for="up-pilot">Customers in the pilot experiment <output for="up-pilot"></output></label>
+    <input type="range" id="up-pilot" name="nPilot" min="500" max="20000" step="500" value="4000" data-format="int">
+    <p class="hint">A coin flip decides which pilot customers get the offer.</p>
+  </div>
+  <div class="button-row">
+    <button type="button" id="up-new">Draw a new sample</button>
+    <button type="reset">Reset</button>
+    <span class="sample-label" id="up-sample"></span>
+  </div>
+</form>
+<div class="chart-stack">
+<figure class="chart">
+  <p class="chart-title">Which customers each rule targets</p>
+  <ul class="legend" id="up-scatter-legend"></ul>
+  <svg id="up-scatter"></svg>
+  <figcaption>Each dot is one of 800 new customers. The color shows which rule targets the customer at the budget. Gray dots get no offer. Both axes show true values, which only a simulation knows. Hover over a dot to see its values.</figcaption>
+</figure>
+<figure class="chart">
+  <p class="chart-title">Uplift curve: churners prevented as the firm targets more customers</p>
+  <ul class="legend" id="up-curve-legend"></ul>
+  <svg id="up-curve"></svg>
+  <figcaption>Each line adds up the true uplift of the targeted customers, in the order of its rule. The dashed line sorts the customers by true uplift, which only a simulation knows. The dotted gray line is the expected result of random targeting. The vertical line marks the budget. Below 0, the offer raises churn among the targeted customers.</figcaption>
+</figure>
+</div>
+</div>
+
+<div class="results-wrap">
+<table class="results">
+  <caption>Results at the budget</caption>
+  <thead><tr><th scope="col">Targeting rule</th><th scope="col">Churners prevented per 1,000 customers</th><th scope="col">Average true churn risk of the targeted customers</th></tr></thead>
+  <tbody>
+    <tr><td><span class="swatch s1"></span>Uplift targeting</td><td id="up-p-uplift"></td><td id="up-r-uplift"></td></tr>
+    <tr><td><span class="swatch s2"></span>Risk targeting</td><td id="up-p-risk"></td><td id="up-r-risk"></td></tr>
+    <tr><td><span class="swatch sg"></span>Random targeting (expected)</td><td id="up-p-random"></td><td id="up-r-random"></td></tr>
+    <tr><td><span class="swatch s3"></span>Best possible (simulation only)</td><td id="up-p-best"></td><td id="up-r-best"></td></tr>
+  </tbody>
+</table>
+</div>
+<dl class="readout">
+  <div><dt>Uplift targeting minus risk targeting, churners prevented per 1,000 customers</dt><dd id="up-gap"></dd></div>
+  <div><dt>Targeted customers that both rules pick</dt><dd id="up-overlap"></dd></div>
+  <div><dt>New customers for whom the offer raises churn</dt><dd id="up-neg"></dd></div>
+  <div><dt>Churners prevented per 1,000 customers if the firm targets everyone</dt><dd id="up-total"></dd></div>
+</dl>
+</div>
+<noscript><p class="noscript">The simulation needs JavaScript. The text on this page still explains the method.</p></noscript>
+</section>
+
+<aside class="notice" aria-labelledby="notice">
+<h2 id="notice">What to notice</h2>
+<ul>
+  <li>Start at the default settings, where the link is weak and negative. Risk targeting prevents about 17 churners per 1,000 customers. This is more than random targeting (about 11), but far fewer than uplift targeting (about 44). Uplift targeting comes close to the best possible.</li>
+  <li>At the same settings, about half of the orange dots (risk targeting only) have an uplift below zero, so the offer raises their churn. The green dots (both rules) show that some customers with a high churn risk do respond to the offer. Uplift targeting picks customers with a lower average churn risk than risk targeting does.</li>
+  <li>Look at the colors in the scatter. Orange dots (risk targeting only) and green dots (both rules) fill the right side. Risk targeting takes the customers above a cutoff in churn risk, whatever their uplift. Blue dots (uplift targeting only) and green dots fill the top. Uplift targeting takes mostly the customers with the highest uplift, across a wide range of churn risk.</li>
+  <li>Move the link to &minus;0.9. The two rules now pick mostly different customers. Risk targeting prevents fewer churners than random targeting, and its number falls below zero. On balance, the offer raises churn among the customers that risk targeting picks.</li>
+  <li>Then move the link to 0.9. Customers with a high churn risk now also respond more to the offer. Most targeted customers are the same under both rules, and the orange curve (risk targeting) moves close to the blue curve (uplift targeting).</li>
+  <li>Press Reset. Set the pilot to 500 customers and draw several new samples. The number of churners that uplift targeting prevents changes from sample to sample. In some samples the blue curve (uplift targeting) falls far below the dashed curve (best possible). The predicted uplift is the difference between two predictions. A small pilot makes both of them imprecise.</li>
+  <li>Now set the pilot to 20,000 customers. The blue curve and the dashed curve nearly overlap. The orange curve (risk targeting) stays far below them, at less than half the churners that uplift targeting prevents. The larger pilot gives a more precise churn model, but the churn model still answers the prediction question.</li>
+  <li>Press Reset. Follow the blue curve (uplift targeting) and the dashed curve (best possible) to the right. They peak at about three quarters of the customers and then fall, because the customers added last have a negative uplift. Set the average strength to 0. The offer now raises churn for about half of the new customers, and the two curves peak near 50%. The dotted gray line (random targeting) ends below zero.</li>
+</ul>
+</aside>
+
+<section class="prose" aria-labelledby="idea">
+<h2 id="idea">The idea</h2>
+<p>Consider a firm, for example a phone company or a membership organization. To keep customers from leaving, the firm can send a retention offer, such as a discount or a gift. The offer costs money, so the firm sends it to only some customers. A <strong>targeting rule</strong> decides which customers get the offer. The <strong>budget</strong> is the share of customers that the firm can target.</p>
+<p>Each customer has two <strong>potential outcomes</strong>: churn with the offer, written \(Y(1)\), and churn without the offer, written \(Y(0)\). Churn is 1 if the customer leaves and 0 if the customer stays. The firm observes only one of the two outcomes for each customer, because each customer either gets the offer or does not get it. The two potential outcomes sort the customers into four kinds.</p>
+<div class="results-wrap">
+<table class="results" id="up-kinds">
+  <caption>Four kinds of customers</caption>
+  <thead><tr><th scope="col">Kind of customer</th><th scope="col">Without the offer, \(Y(0)\)</th><th scope="col">With the offer, \(Y(1)\)</th></tr></thead>
+  <tbody>
+    <tr><td>Kept by the offer</td><td>Leaves (1)</td><td>Stays (0)</td></tr>
+    <tr><td>Stays either way</td><td>Stays (0)</td><td>Stays (0)</td></tr>
+    <tr><td>Leaves either way</td><td>Leaves (1)</td><td>Leaves (1)</td></tr>
+    <tr><td>Driven away by the offer</td><td>Stays (0)</td><td>Leaves (1)</td></tr>
+  </tbody>
+</table>
+</div>
+<p>Gutierrez and G&eacute;rardy (2017) call a customer of the last kind a <strong>sleeping dog</strong>. Nobody can see the kind of a single customer, because each customer shows only one of the two potential outcomes. The <a href="index.html#terms">key terms</a> on the home page call this the fundamental problem of causal inference.</p>
+<details class="symbols" id="up-strata-details">
+<summary>The four kinds and principal strata</summary>
+<p>These four kinds look like the principal strata of <a href="principal-strata.html">Module 3.2</a>, but they differ in one way. Principal strata are defined by a variable that the treatment can change, such as employment after a training program. These four kinds are defined by the outcome itself, churn with and without the offer.</p>
+</details>
+<p>Consider a group of customers. The <strong>uplift</strong> of the offer for this group is the share that would leave without the offer minus the share that would leave with it. This difference equals the share that the offer keeps minus the share that the offer drives away. The other two kinds churn in the same way with or without the offer, so they do not change the uplift. A randomized experiment can estimate the uplift, the difference of the two shares. Without further assumptions, it cannot estimate each share separately.</p>
+<details class="symbols" id="up-cate-details">
+<summary>Uplift as a conditional average treatment effect</summary>
+<p>For customers with given characteristics, the uplift is a <strong>conditional average treatment effect (CATE)</strong> with the sign reversed. A CATE is the average effect of a treatment among the units that share given characteristics (Huntington-Klein 2025, ch. 10). The <a href="index.html#terms">key terms</a> give its formula. Uplift modeling estimates such a CATE (Gutierrez and G&eacute;rardy 2017).</p>
+<p>Here the treatment is the offer, and the outcome is churn. An offer that keeps customers lowers churn, so its CATE on churn is negative. This page reports the uplift instead, so that a positive number means that the offer keeps customers. A negative uplift means that the offer raises churn. This can happen for some customers.</p>
+<p>In symbols, write \(D = 1\) for a customer who gets the offer and \(D = 0\) for a customer who does not. Write \(Y(1)\) for churn with the offer and \(Y(0)\) for churn without the offer, with 1 for a customer who leaves. \(E[\,\cdot\,]\) is an average over the population of customers.</p>
+<p>A vertical bar means among: \(E[Y(0) \mid X = x]\) is the average of \(Y(0)\) among the customers with characteristics \(X = x\). Write \(p_0(x) = E[Y(0) \mid X = x]\) and \(p_1(x) = E[Y(1) \mid X = x]\). Churn is 0 or 1, so these averages are churn probabilities. The CATE of the offer on churn is</p>
+<p class="formula">\[\begin{aligned} \tau(x) &= E[Y(1) - Y(0) \mid X = x] \\ &= p_1(x) - p_0(x) \end{aligned}\]</p>
+<p>An offer that keeps customers has a negative \(\tau(x)\). This page reports the uplift, the drop in churn:</p>
+<p class="formula">\[u(x) = p_0(x) - p_1(x) = -\tau(x)\]</p>
+</details>
+<details class="symbols" id="up-kinds-symbols">
+<summary>The four kinds in symbols</summary>
+<p>Among customers with \(X = x\), write \(q_K(x)\) for the share kept by the offer (\(Y(0) = 1\) and \(Y(1) = 0\)). Write \(q_A(x)\) for the share driven away (\(Y(0) = 0\) and \(Y(1) = 1\)). Write \(q_L(x)\) for the share that leaves either way. Then \(p_0(x) = q_K(x) + q_L(x)\) and \(p_1(x) = q_A(x) + q_L(x)\), so</p>
+<p class="formula">\[u(x) = q_K(x) - q_A(x)\]</p>
+<p>An experiment gives only the two numbers \(p_0(x)\) and \(p_1(x)\). They fix the difference \(q_K(x) - q_A(x)\), but not the three shares one by one. For example, an extra assumption that the offer drives no customer away would give \(q_K(x) = u(x)\).</p>
+</details>
+<p>A <strong>churn model</strong> predicts the probability that a customer leaves without the offer. This probability is the <strong>churn risk</strong>. <strong>Risk targeting</strong> sends the offer to the customers with the highest predicted churn risk. An <strong>uplift model</strong> predicts the uplift from the characteristics of a customer. <strong>Uplift targeting</strong> sends the offer to the customers with the highest predicted uplift.</p>
+<p>The two rules can pick different customers. A customer with a high churn risk can be kept by the offer, or the customer can leave either way. Both kinds leave without the offer, so a churn model cannot tell them apart. A customer with a moderate churn risk can have a large uplift if the offer changes what the customer decides.</p>
+<p>Ascarza (2018) combined two field experiments (randomized experiments with the real customers of a firm) with machine learning. One experiment was with a wireless telecommunications provider. The other was with a membership organization. She showed that the customers with the highest predicted churn risk are not necessarily the best targets for a retention offer. Targeting customers by their sensitivity to the offer, which this page calls uplift, was more effective than targeting the customers with the highest churn risk.</p>
+<p>A more accurate churn model does not fix risk targeting. A churn model answers a prediction question: which customers will leave? The firm needs the answer to a causal question: which customers will the offer keep? The results of Ascarza (2018) show that the two questions can have different answers. The <a href="index.html#terms">key terms</a> explain how a prediction question differs from a causal question.</p>
+<p>The two models need different data. A churn model can learn from historical data on who left and who stayed. An uplift model needs data in which chance decided who got the offer, for example a coin flip. Other data also work if the assignment of the offer is unrelated to the potential outcomes of the customers once their characteristics are known. Gutierrez and G&eacute;rardy (2017) call this condition <strong>unconfoundedness</strong>.</p>
+<p>Historical data can fail this condition. Suppose that a firm sent past offers mainly to customers whom it judged likely to leave. Then the customers with an offer would churn more than the other customers even if the offer did nothing. This gap is <strong>selection bias</strong> (see the <a href="index.html#terms">key terms</a>). A comparison of customers with and without an offer mixes the effect of the offer with this selection bias.</p>
+<p>An uplift model also needs customers with every combination of characteristics to have some chance to get the offer. They must also have some chance not to get it. If past offers never went to customers with a low churn risk, the data show nothing about how these customers respond to the offer.</p>
+<p>On this page, the firm first runs a <strong>pilot experiment</strong>. For each pilot customer, a coin flip decides whether the customer gets the offer. So the offer is unrelated to the potential outcomes, and every pilot customer has the same chance, one half, to get the offer. The firm then records who churns.</p>
+<p>Next, the firm uses the <strong>two-model approach</strong> (Gutierrez and G&eacute;rardy 2017). A <strong>logistic regression</strong> is a regression for an outcome that is 0 or 1, and it predicts a probability. The firm fits one logistic regression of churn to the pilot customers without the offer and another to the pilot customers with the offer. For a new customer, the predicted uplift is the predicted churn probability without the offer minus the predicted churn probability with the offer. The regression for the customers without the offer is also the churn model: it gives the predicted churn risk.</p>
+<p>In symbols, the observed churn is \(Y = Y(D)\). If a coin flip sets \(D\), then</p>
+<p class="formula">\[\begin{aligned} E[Y \mid X = x, D = 1] &= p_1(x) \quad \text{and} \\ E[Y \mid X = x, D = 0] &= p_0(x) \end{aligned}\]</p>
+<p>So the pilot data identify both probabilities. The two-model approach fits one logistic regression in each pilot group and takes the difference of the fitted probabilities.</p>
+<details class="symbols" id="up-curve-details">
+<summary>Uplift curves and how to estimate them in real data</summary>
+<p>An <strong>uplift curve</strong> shows the result of a targeting rule as the firm targets more customers. The firm sorts the customers from the highest to the lowest predicted uplift and targets the top share. The horizontal axis shows the share of customers targeted. The vertical axis shows the number of churners that the offer prevents among the targeted customers (Radcliffe and Surry 2011; Gutierrez and G&eacute;rardy 2017).</p>
+<p>In symbols, suppose that the firm targets the \(k\) customers with the highest score among \(N\) new customers. The expected number of churners prevented per 1,000 customers is \(1000 / N\) times the sum of \(u(x_i)\) over the \(k\) targeted customers. The uplift curve plots this number against \(k / N\).</p>
+<p>This page draws the same kind of curve for risk targeting, with the customers sorted by predicted churn risk. Random targeting gives a straight line from zero to the effect of targeting everyone. When the offer raises churn for some customers, the curve can peak before 100% of the customers are targeted.</p>
+<p>A conventional gains chart is a different chart. It counts the churners among the targeted customers. So it shows whether a model finds the customers who leave, but not whether the offer keeps them. A gains chart is not an uplift curve.</p>
+<p>In real data, the firm does not know the effect of the offer on any single customer. So it estimates the uplift curve on held-out data: customers from an experiment that the firm did not use to fit the models. Within the top share, it compares the churn of the customers who got the offer with the churn of the customers who did not. This page uses the true effects instead, which only a simulation knows.</p>
+</details>
+</section>
+
+<section class="refs prose" aria-labelledby="refs">
+<h2 id="refs">References</h2>
+<ol id="up-refs">
+  <li>Ascarza, E. (2018). Retention futility: Targeting high-risk customers might be ineffective. <cite>Journal of Marketing Research, 55</cite>(1), 80-98. <a href="https://doi.org/10.1509/jmr.16.0163">https://doi.org/10.1509/jmr.16.0163</a></li>
+  <li>Gutierrez, P., &amp; G&eacute;rardy, J.-Y. (2017). Causal inference and uplift modelling: A review of the literature. <cite>Proceedings of Machine Learning Research, 67</cite>, 1-13. <a href="https://proceedings.mlr.press/v67/gutierrez17a.html">https://proceedings.mlr.press/v67/gutierrez17a.html</a></li>
+  <li>Huntington-Klein, N. (2025). <cite>The effect: An introduction to research design and causality</cite> (2nd ed.). Chapman &amp; Hall. Chapter 10, Treatment Effects. Free online edition: <a href="https://theeffectbook.net/ch-TreatmentEffects.html">https://theeffectbook.net/ch-TreatmentEffects.html</a></li>
+  <li>Radcliffe, N. J., &amp; Surry, P. D. (2011). <cite>Real-world uplift modelling with significance-based uplift trees</cite> (Portrait Technical Report TR-2011-1). Stochastic Solutions. <a href="https://www.stochasticsolutions.com/pdf/sig-based-up-trees.pdf">https://www.stochasticsolutions.com/pdf/sig-based-up-trees.pdf</a></li>
+</ol>
+</section>
+
+<nav class="pager" aria-label="Module pages">
+  <a href="selective-labels.html">Previous: 6.1 Selective labels</a>
+  <a href="index.html">Home</a>
+</nav>
+</main>
+
+<footer class="site-footer"><div class="inner">
+<p>All data on this site are simulated in your browser.</p>
+<p>Made by <a href="https://j1yoo.github.io/">Jaewon Yoo</a>, National Tsing Hua University. Code: <a href="https://polyformproject.org/licenses/noncommercial/1.0.0">PolyForm Noncommercial 1.0.0</a>. Text: <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/">Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 (CC BY-NC-ND 4.0)</a>.</p>
+</div></footer>
+<script src="assets/js/core/analytics.js"></script>
+<script src="assets/vendor/katex/katex.min.js"></script>
+<script src="assets/vendor/katex/auto-render.min.js"></script>
+<script src="assets/js/core/math.js"></script>
+<script src="assets/js/core/rng.js"></script>
+<script src="assets/js/core/stats.js"></script>
+<script src="assets/js/core/plot.js"></script>
+<script src="assets/js/core/ui.js"></script>
+<script src="assets/js/sims/uplift.js"></script>
+<script src="assets/js/pages/uplift-page.js"></script>
+</body>
+</html>

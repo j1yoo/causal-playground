@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Regression discontinuity | Causal Playground</title>
+<meta name="description" content="Interactive simulation: how a regression discontinuity estimate depends on the bandwidth, the fitted curves, and students who move their score across the cutoff.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/vendor/katex/katex.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+  /* Page styles that style.css does not have. */
+  .rd-charts { min-width: 0; }
+  svg .dot.raw { stroke: none; fill-opacity: 0.35; }
+  svg .ln.fit { stroke-width: 3; }
+  .rd-status { font-size: 0.9rem; color: var(--ink-2); margin: 10px 0 0; }
+  .rd-status:empty { display: none; }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><div class="inner">
+  <a class="site-title" href="index.html">Causal Playground</a>
+  <nav class="site-nav" aria-label="Modules">
+    <span class="nav-part"><span class="nav-part-name">1 Randomized experiments</span> <a href="randomization-inference.html">Randomization inference</a> <a href="neyman.html">Neyman and blocking</a></span>
+    <span class="nav-part"><span class="nav-part-name">2 Observational studies</span> <a href="controls.html">Regression and controls</a></span>
+    <span class="nav-part"><span class="nav-part-name">3 Noncompliance</span> <a href="iv.html">Instrumental variables</a> <a href="principal-strata.html">Principal strata</a></span>
+    <span class="nav-part"><span class="nav-part-name">4 Regression discontinuity</span> <a href="rd.html" aria-current="page">Sharp design</a></span>
+    <span class="nav-part"><span class="nav-part-name">5 Difference-in-differences</span> <a href="did.html">Parallel trends</a> <a href="staggered.html">Staggered adoption</a> <a href="event-study.html">Event study</a></span>
+    <span class="nav-part"><span class="nav-part-name">6 Prediction and decisions</span> <a href="selective-labels.html">Selective labels</a> <a href="uplift.html">Uplift targeting</a></span>
+  </nav>
+</div></header>
+
+<main id="main">
+<p class="kicker">4.1 Regression discontinuity</p>
+<h1>Regression discontinuity: estimating a jump at a cutoff</h1>
+<p class="lede">Regression discontinuity (RD) estimates the effect of a treatment when a score decides who gets it. Units with a score at or above a cutoff get the treatment, and units below the cutoff do not. This page shows how two things change the estimate: the curves that the method fits, and units that move their score across the cutoff.</p>
+
+<section class="prose" aria-labelledby="brief">
+<h2 id="brief">In brief</h2>
+<p>A university gives a scholarship to every student with an entrance test score of 50 or more. We want to know how the scholarship changes the first-year grade average of a student.</p>
+<ul>
+<li>On each side of the cutoff at 50, the method fits a curve and reads its value there. The <strong>RD estimate</strong> is the right value, on the scholarship side, minus the left value. It estimates the jump in the average grade at the cutoff.</li>
+<li>The <strong>true effect at the cutoff</strong> is the amount that the scholarship adds to the grade of every student at or above the cutoff. The simulation knows it.</li>
+<li><strong>Estimate minus true effect</strong> shows the error of the estimate in the current sample. This error is the <strong>bias</strong> plus the <strong>sampling error</strong>, the part of the error that changes from sample to sample. The bias is the average of the error over many samples.</li>
+<li>The <strong>density check p-value</strong> tests whether as many students have a score from 48 to under 50 as from 50 to under 52. Students who raise their score make this split uneven.</li>
+</ul>
+<p>Move the sliders and watch these numbers. The explanation below the simulation gives the reasons.</p>
+</section>
+
+<section aria-labelledby="try">
+<h2 id="try">Try it</h2>
+<p class="prose">The simulation draws students with test scores spread evenly from 0 to 100. The sliders set the true effect, a smooth bend in the average grade, the bandwidth, and the share of students who raise their score. The Estimator list chooses how the method fits the curves.</p>
+<details class="symbols" id="rd-sim-details">
+<summary>How the simulation makes the data</summary>
+<p>Each student also has an effort level that the researcher does not observe. Effort raises the grade. Effort is not related to the score, unless you let some students raise their score.</p>
+<p>The average grade rises with the score, and the curvature slider adds a smooth bend around the score of 50. The bend has no jump, so it is not an effect of the scholarship. The scholarship adds the true effect to the grade of every student with a score of 50 or more.</p>
+<p>In symbols, write \(X\) for the score and \(Y\) for the grade. Let \(D = 1\) for a student with the scholarship and \(D = 0\) otherwise. The simulation draws \(X\) from the uniform distribution on \([0, 100]\) and sets</p>
+<p class="formula">\[\begin{aligned} Y = {} & 60 + 0.2(X - 50) \\ & + 6k \tanh((X - 50)/8) \\ & + 2e + \tau D + \sigma\varepsilon \end{aligned}\]</p>
+<p>Here \(\tanh\) is the hyperbolic tangent, \(k\) is the curvature, \(\tau\) is the true effect, and \(\sigma\) is the noise. The effort \(e\) and the noise term \(\varepsilon\) are independent standard normal draws. With manipulation, each student with \(45 \le X &lt; 50\) and \(e &gt; 0\) moves with probability \(q\). The new score comes from the uniform distribution on \([50, 52)\). The simulation then uses the new score as \(X\) in the formula above.</p>
+<p>The simulation knows the true effect. With the default settings, the bias of the local linear estimate is about 0.6, because the straight lines cannot follow the bend. Draw new samples to see the sampling error change. The standard error in the table measures how much an estimate changes from sample to sample.</p>
+<p>The true curve in this simulation is smooth, and a polynomial of order 4 can follow it closely. So here the global polynomial has little bias. Watch instead how much its estimate changes from sample to sample.</p>
+</details>
+<div class="sim">
+<div class="sim-grid">
+<form id="rd-controls" class="controls" aria-label="Simulation settings">
+  <div class="control">
+    <label for="rd-tau">True effect of the scholarship at the cutoff <output for="rd-tau"></output></label>
+    <input type="range" id="rd-tau" name="tau" min="-5" max="10" step="0.5" value="4">
+  </div>
+  <div class="control">
+    <label for="rd-curv">Curvature of the outcome line <output for="rd-curv"></output></label>
+    <input type="range" id="rd-curv" name="curvature" min="0" max="1.5" step="0.05" value="0.5">
+    <p class="hint">Adds a smooth S-shaped bend around the score of 50. The bend has no jump.</p>
+  </div>
+  <div class="control">
+    <label for="rd-est">Estimator</label>
+    <select id="rd-est" name="estimator">
+      <option value="constant">Local constant (difference in weighted means)</option>
+      <option value="linear" selected>Local linear</option>
+      <option value="quadratic">Local quadratic</option>
+      <option value="global4">Global polynomial of order 4</option>
+    </select>
+  </div>
+  <div class="control">
+    <label for="rd-h">Bandwidth <output for="rd-h"></output></label>
+    <input type="range" id="rd-h" name="h" min="2" max="50" step="1" value="15">
+    <p class="hint">Distance from the cutoff on each side. The local fits use only the students inside the bandwidth window. The global polynomial uses all students.</p>
+  </div>
+  <div class="control">
+    <label for="rd-q">Share of students just below 50 with high effort who raise their score <output for="rd-q"></output></label>
+    <input type="range" id="rd-q" name="q" min="0" max="0.8" step="0.05" value="0" data-format="pct">
+    <p class="hint">Applies to students with a score from 45 to under 50 and effort above the average. They move to a score from 50 to under 52.</p>
+  </div>
+  <div class="control">
+    <label for="rd-noise">Noise (standard deviation) <output for="rd-noise"></output></label>
+    <input type="range" id="rd-noise" name="noise" min="1" max="10" step="0.5" value="4">
+  </div>
+  <div class="control">
+    <label for="rd-n">Number of students <output for="rd-n"></output></label>
+    <input type="range" id="rd-n" name="n" min="200" max="3000" step="100" value="1000" data-format="int">
+  </div>
+  <div class="button-row">
+    <button type="button" id="rd-new">Draw a new sample</button>
+    <button type="reset">Reset</button>
+    <span class="sample-label" id="rd-sample"></span>
+  </div>
+</form>
+<div class="rd-charts">
+<figure class="chart">
+  <ul class="legend" id="rd-legend"></ul>
+  <svg id="rd-chart"></svg>
+  <figcaption>Gray dots show single students, but the chart leaves out the dots outside its vertical range, at most 2% of the students. Larger dots show the average grade in 2-point score bins. Solid lines show the fitted curves. With a local fit, the shaded area marks the bandwidth window, and the fitted curves cover only this window. The dashed line shows the true average grade at each score when no student raises a score, and the vertical line marks the cutoff. Hover over a larger dot to see its value.</figcaption>
+</figure>
+<figure class="chart">
+  <ul class="legend" id="rd-bw-legend"></ul>
+  <svg id="rd-bw"></svg>
+  <figcaption>The line shows the RD estimate in the current sample for each bandwidth on the horizontal axis. The shaded band is its 95% confidence interval. The dashed line is the true effect at the cutoff. The dot with a vertical line marks the bandwidth that the slider sets. The global polynomial ignores the bandwidth, so its line is flat. Hover over the dot to see its values.</figcaption>
+</figure>
+<figure class="chart">
+  <ul class="legend" id="rd-hist-legend"></ul>
+  <svg id="rd-hist"></svg>
+  <figcaption>Number of students in each 2-point score bin. The density check compares the two colored bins next to the cutoff. Hover over a bar to see its count.</figcaption>
+</figure>
+<dl class="readout">
+  <div><dt>Students with a score from 48 to under 50</dt><dd id="rd-r-below"></dd></div>
+  <div><dt>Students with a score from 50 to under 52</dt><dd id="rd-r-above"></dd></div>
+  <div><dt>Density check p-value</dt><dd id="rd-r-p"></dd></div>
+</dl>
+</div>
+</div>
+
+<div class="results-wrap">
+<table class="results">
+  <caption>The regression discontinuity calculation</caption>
+  <thead><tr><th scope="col">Side of the cutoff</th><th scope="col">Fitted average grade at 50</th><th scope="col">Standard error</th><th scope="col">Students used</th></tr></thead>
+  <tbody>
+    <tr><td><span class="swatch s2"></span>Below 50 (no scholarship)</td><td id="rd-l-a"></td><td id="rd-l-se"></td><td id="rd-l-n"></td></tr>
+    <tr><td><span class="swatch s1"></span>50 or above (scholarship)</td><td id="rd-r-a"></td><td id="rd-r-se"></td><td id="rd-r-n"></td></tr>
+    <tr class="key"><td>RD estimate (right minus left)</td><td id="rd-t-est"></td><td id="rd-t-se"></td><td id="rd-t-n"></td></tr>
+  </tbody>
+</table>
+</div>
+<dl class="readout">
+  <div><dt>RD estimate</dt><dd id="rd-r-est"></dd></div>
+  <div><dt>95% confidence interval</dt><dd id="rd-r-ci"></dd></div>
+  <div><dt>True effect at the cutoff</dt><dd id="rd-r-true"></dd></div>
+  <div><dt>Estimate minus true effect</dt><dd id="rd-r-bias"></dd></div>
+  <div><dt>Students used in the fit</dt><dd id="rd-r-used"></dd></div>
+</dl>
+<p class="rd-status" id="rd-status" role="status"></p>
+</div>
+<noscript><p class="noscript">The simulation needs JavaScript. The text on this page still explains the method.</p></noscript>
+</section>
+
+<aside class="notice" aria-labelledby="notice">
+<h2 id="notice">What to notice</h2>
+<ul>
+  <li>Set the curvature to 0. The fitted lines lie close to the dashed line. Draw new samples. The estimate moves around the true effect by chance, and the confidence interval usually contains the true effect.</li>
+  <li>Set the curvature to 1.5 and the bandwidth to 50. Each straight line misses the bend: at the cutoff, the left line ends below the dashed line and the right line ends above it. The estimate is more than 7 points above the true effect. Now set the true effect to 0. The estimate stays above 7, and the confidence interval does not contain 0. The straight lines take the smooth bend for a jump.</li>
+  <li>Keep the curvature at 1.5 and lower the bandwidth to 5. The estimate moves closer to the true effect. The fit now uses about 100 students instead of 1000, so the confidence interval gets wider. The bandwidth chart shows this pattern at every bandwidth at once. As the bandwidth grows, the estimate climbs away from the dashed line and the shaded band gets narrower.</li>
+  <li>Press Reset and choose local constant. The estimate lands about 5 points above the true effect, because the average grade rises with the score inside the bandwidth window. Then choose the global polynomial of order 4. It uses all 1000 students, but its confidence interval is wider than the interval of the local linear fit, which uses about 300 students. Draw new samples. Each fitted curve moves up and down most at its two ends, and one of those ends is at the cutoff.</li>
+  <li>Press Reset and set the share of students who raise their score to 80%. In the histogram, the bars just below 50 get shorter and the bar just above 50 gets taller. In most samples, the density check p-value falls below 0.05 and the estimate rises. The bias grows because the students just above the cutoff now include extra students with high effort. The students just below it include fewer.</li>
+</ul>
+</aside>
+
+<section class="prose" aria-labelledby="idea">
+<h2 id="idea">The idea</h2>
+<p>A university gives a scholarship to every student with an entrance test score of 50 or more. Scores go from 0 to 100. We want to know how the scholarship changes the first-year grade average of a student.</p>
+<p>A comparison of all students with the scholarship and all students without it mixes two things. One thing is the effect of the scholarship. The other thing is the difference between students with high and low test scores. These students would get different grades even without a scholarship.</p>
+<p>The test score is the <strong>running variable</strong>: the variable whose value decides who gets the treatment. The value 50 is the <strong>cutoff</strong>. The design is <strong>sharp</strong>: every student with a score at or above the cutoff gets the scholarship. No student below the cutoff gets it. So a student with a score of exactly 50 gets the scholarship (Cunningham 2021, ch. 6; Cattaneo, Idrobo, and Titiunik 2020).</p>
+<p>Students with a score just below 50 and students with a score just above 50 have almost the same score. RD compares the average grade on the two sides of the cutoff, at the cutoff itself. It estimates the jump in the average grade at the cutoff.</p>
+<p>The jump measures the effect of the scholarship if the <strong>continuity assumption</strong> holds. Think of the average grade that students with a given score would get without the scholarship. This average must change smoothly with the score at 50, with no jump. The same must be true for the average grade with the scholarship. Under this assumption, the jump at the cutoff equals the average effect of the scholarship for students who score 50 (Cattaneo, Idrobo, and Titiunik 2020).</p>
+<p>In symbols, write \(X\) for the score and \(c = 50\) for the cutoff. Let \(D = 1\) if \(X \ge c\) and \(D = 0\) if \(X &lt; c\). Write \(Y(1)\) for the grade of a student with the scholarship and \(Y(0)\) for the grade of the same student without it. The observed grade is \(Y = D\,Y(1) + (1 - D)\,Y(0)\). The target is the average effect at the cutoff:</p>
+<p class="formula">\[\tau = E[Y(1) - Y(0) \mid X = c]\]</p>
+<p>If \(E[Y(0) \mid X = x]\) and \(E[Y(1) \mid X = x]\) are continuous at \(x = c\), then</p>
+<p class="formula">\[\tau = \lim_{x \downarrow c} E[Y \mid X = x] - \lim_{x \uparrow c} E[Y \mid X = x]\]</p>
+<p>Continuity also fails when something else changes at the same cutoff. Suppose that the university also puts every student with a score of 50 or more into an honors program. Then the jump at 50 mixes the effect of the scholarship with the effect of the program. The data cannot separate the two (Cunningham 2021, ch. 6).</p>
+<p>The result is local. It is the average effect for students at the cutoff. Without more assumptions, it says nothing about students far from the cutoff, for example students with a score of 90.</p>
+<p>Students with the scholarship and students without it never have the same score. So RD cannot compare the two groups at one score value. Instead, RD fits a curve to the data on each side and reads the value of each curve at the cutoff. The cutoff is at the edge of the data on each side. So this step extrapolates each curve to the cutoff from one side (Cattaneo, Idrobo, and Titiunik 2020).</p>
+
+<h3>How to fit the curves</h3>
+<p>The default method is <strong>local linear regression</strong> (Cattaneo, Idrobo, and Titiunik 2020). It uses only the students with a score within a distance h of the cutoff. This distance is the <strong>bandwidth</strong>. The range from \(50 - h\) to \(50 + h\) is the <strong>bandwidth window</strong>. So h is the distance on each side of the cutoff, and the bandwidth window is \(2h\) wide.</p>
+<p>On each side of the cutoff, the method fits a separate straight line by weighted least squares. This is a regression in which some students count more than others. A <strong>kernel</strong> is a rule that sets each weight from the distance between the score and the cutoff. The <strong>triangular kernel</strong> gives the most weight to students at the cutoff, and the weight falls in a straight line to zero at distance h. Cattaneo, Idrobo, and Titiunik (2020) recommend this kernel, and they note that results usually change little with the choice of kernel. The RD estimate is the value of the right line at 50 minus the value of the left line at 50.</p>
+<p>In symbols, the triangular kernel is \(K(u) = 1 - |u|\) for \(|u| \le 1\) and \(K(u) = 0\) otherwise. On each side of the cutoff, local linear regression with bandwidth \(h\) chooses \(a\) and \(b\) to minimize</p>
+<p class="formula">\[\sum_i K\!\left(\frac{X_i - c}{h}\right) \bigl(Y_i - a - b(X_i - c)\bigr)^2\]</p>
+<p>over the students on that side. The RD estimate is \(a_{\text{right}} - a_{\text{left}}\).</p>
+<details class="symbols" id="rd-regression-symbols">
+<summary>The RD estimate from one regression</summary>
+<p>The same estimate comes from one weighted regression on all students in the bandwidth window, with the same kernel weights. The regression is \(Y = \alpha + \beta(X - c) + \tau D + \gamma(X - c)D\). Because the score is centered at the cutoff, the coefficient \(\tau\) on \(D\) is the RD estimate (Cunningham 2021, ch. 6).</p>
+</details>
+<p>The <strong>bias</strong> of a method is the average of its estimates over many samples minus the true effect. The bandwidth sets a trade-off. A smaller bandwidth uses students closer to the cutoff, where a straight line follows the true curve better, so the bias falls.</p>
+<p>A smaller bandwidth also uses fewer students, so the estimate changes more from sample to sample. Then the 95% confidence interval, a range built to contain the true effect in about 95% of samples, gets wider. Because of this trade-off, researchers should choose the bandwidth with a data-driven rule (Cattaneo, Idrobo, and Titiunik 2020). On this page you move the bandwidth by hand to see the trade-off.</p>
+<details class="symbols" id="rd-bandwidths-details">
+<summary>Several bandwidths and the confidence interval</summary>
+<p>Researchers often report the estimate for several bandwidths. The bandwidth chart on this page does this for the current sample. As the bandwidth grows, the interval gets shorter. With a curved outcome line, the estimate also moves away from the true effect, because the bias grows. This check is useful mainly for bandwidths close to a data-driven choice (Cattaneo, Idrobo, and Titiunik 2020).</p>
+<p>The usual 95% confidence interval measures only how much the estimate changes from sample to sample. It does not include the bias. When the bias is large compared with the standard error, the interval misses the true effect far more often than in 5% of samples. At the bandwidth that minimizes the mean squared error, the bias stays about as large as the standard error, even in large samples. So Cattaneo, Idrobo, and Titiunik (2020) recommend robust bias-corrected confidence intervals for inference at that bandwidth. This page shows only the usual interval.</p>
+<p>Each side of the cutoff has a heteroskedasticity-robust standard error (se), which allows the noise to differ across students. The page combines the two as \(\text{se} = \sqrt{\text{se}_{\text{left}}^2 + \text{se}_{\text{right}}^2}\). The 95% confidence interval is the estimate \(\pm 1.96\,\text{se}\).</p>
+</details>
+<details class="symbols" id="rd-fits-details">
+<summary>Other ways to fit the curves</summary>
+<p>A simpler method compares the average grades on the two sides of the cutoff inside the bandwidth window. This method is local constant regression. At the cutoff, the bias of local constant regression is roughly proportional to the bandwidth when the bandwidth is small. The reason is that the grade changes with the score inside the bandwidth window. This behavior at the edge of the data is a reason why local linear regression is the default (Cattaneo, Idrobo, and Titiunik 2020). Choose Local constant in the simulation to see this bias.</p>
+<p>In symbols, local constant regression drops the slope terms.</p>
+<p>Local quadratic regression fits a curve with a squared term, \((\text{score} - 50)^2\), on each side instead of a straight line. It can follow a bend better, but its estimate changes more from sample to sample (Cattaneo, Idrobo, and Titiunik 2020). In symbols, local quadratic regression adds a term in \((X_i - c)^2\).</p>
+<p>Another method fits one <strong>global polynomial</strong> to all the data on each side. An example is a polynomial of order 4, which has terms up to the fourth power of the score. In symbols, the global polynomial uses terms up to \((X_i - c)^4\), all students on each side, and equal weights. Gelman and Imbens (2019) give three reasons against this method.</p>
+<p>First, the estimate is a weighted average of the grades at or above the cutoff minus a weighted average of the grades below it. The weights depend only on the scores and the cutoff, not on the grades. With a global polynomial of high order, these weights can have unattractive properties. For example, students far from the cutoff can have a large influence on the estimate (Cattaneo, Idrobo, and Titiunik 2020).</p>
+<p>Second, the estimate can change when the order of the polynomial changes. Third, its confidence intervals can be misleading. Gelman and Imbens recommend local linear or local quadratic fits instead.</p>
+</details>
+
+<h3>When students can move their score</h3>
+<p>Suppose that some students who would score just below 50 can raise their score to just above 50. This is <strong>manipulation</strong> of the running variable. These students can differ from other students, for example because they work harder. Then the students just above the cutoff are no longer like the students just below it, and the continuity assumption can fail (McCrary 2008).</p>
+<p>For example, students who score just below 50 may retake the test. Suppose that students with more time or money retake it more often. Then the students just above the cutoff differ from the students just below it (Cunningham 2021, ch. 6).</p>
+<p>The <strong>density</strong> of the score tells how common each score is. A histogram of the score shows the density. This kind of manipulation leaves a trace in the histogram: too few students just below the cutoff and too many just above it. McCrary (2008) proposed a formal test for a jump in the density of the running variable at the cutoff.</p>
+<details class="symbols" id="rd-density-details">
+<summary>The density check and its limits</summary>
+<p>This page uses a simpler check that Cattaneo, Idrobo, and Titiunik (2020) describe. It counts the students with a score from 48 to under 50 and the students with a score from 50 to under 52. Without manipulation, a student with a score from 48 to under 52 is about equally likely to be on either side of the cutoff.</p>
+<p>An exact binomial test gives the <strong>p-value</strong>. The p-value is the probability of a split at least as uneven as the observed split. This probability assumes that each student has a chance of 1/2 to be on each side. In an example in their text, 47 observations below the cutoff and 53 above it give a p-value of 0.6173. This value gives no evidence of manipulation.</p>
+<p>The density check tests a consequence of one condition: students cannot control their score precisely enough to choose their side of the cutoff. It does not test the continuity assumption itself. A smooth density does not prove that the design is valid, and a valid design does not need a smooth density (McCrary 2008). For example, if as many scores move down across the cutoff as move up, the histogram can stay smooth while the estimate is biased. If chance alone pushes some students across the cutoff, the histogram jumps, but the estimate need not be biased.</p>
+</details>
+</section>
+
+<section class="refs prose" aria-labelledby="refs">
+<h2 id="refs">References</h2>
+<ol id="rd-refs">
+  <li>Cattaneo, M. D., Idrobo, N., &amp; Titiunik, R. (2020). <cite>A practical introduction to regression discontinuity designs: Foundations</cite>. Cambridge University Press. <a href="https://doi.org/10.1017/9781108684606">https://doi.org/10.1017/9781108684606</a></li>
+  <li>Cunningham, S. (2021). <cite>Causal inference: The mixtape</cite>. Yale University Press. Chapter 6, Regression Discontinuity. <a href="https://doi.org/10.2307/j.ctv1c29t27">https://doi.org/10.2307/j.ctv1c29t27</a>. Free online first edition: <a href="https://mixtape-1ed.netlify.app/06-regression_discontinuity.html">chapter 6</a>.</li>
+  <li>Gelman, A., &amp; Imbens, G. (2019). Why high-order polynomials should not be used in regression discontinuity designs. <cite>Journal of Business &amp; Economic Statistics, 37</cite>(3), 447-456. <a href="https://doi.org/10.1080/07350015.2017.1366909">https://doi.org/10.1080/07350015.2017.1366909</a></li>
+  <li>McCrary, J. (2008). Manipulation of the running variable in the regression discontinuity design: A density test. <cite>Journal of Econometrics, 142</cite>(2), 698-714. <a href="https://doi.org/10.1016/j.jeconom.2007.05.005">https://doi.org/10.1016/j.jeconom.2007.05.005</a></li>
+</ol>
+</section>
+
+<nav class="pager" aria-label="Module pages">
+  <a href="principal-strata.html">Previous: 3.2 Principal strata</a>
+  <a href="did.html">Next: 5.1 Difference-in-differences</a>
+</nav>
+</main>
+
+<footer class="site-footer"><div class="inner">
+<p>All data on this site are simulated in your browser.</p>
+<p>Made by <a href="https://j1yoo.github.io/">Jaewon Yoo</a>, National Tsing Hua University. Code: <a href="https://polyformproject.org/licenses/noncommercial/1.0.0">PolyForm Noncommercial 1.0.0</a>. Text: <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/">Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 (CC BY-NC-ND 4.0)</a>.</p>
+</div></footer>
+<script src="assets/js/core/analytics.js"></script>
+<script src="assets/vendor/katex/katex.min.js"></script>
+<script src="assets/vendor/katex/auto-render.min.js"></script>
+<script src="assets/js/core/math.js"></script>
+<script src="assets/js/core/rng.js"></script>
+<script src="assets/js/core/stats.js"></script>
+<script src="assets/js/core/plot.js"></script>
+<script src="assets/js/core/ui.js"></script>
+<script src="assets/js/sims/rd.js"></script>
+<script src="assets/js/pages/rd-page.js"></script>
+</body>
+</html>

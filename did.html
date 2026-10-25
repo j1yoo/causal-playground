@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Difference-in-differences | Causal Playground</title>
+<meta name="description" content="Interactive simulation: what happens to a difference-in-differences estimate when parallel trends fails.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/vendor/katex/katex.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><div class="inner">
+  <a class="site-title" href="index.html">Causal Playground</a>
+  <nav class="site-nav" aria-label="Modules">
+    <span class="nav-part"><span class="nav-part-name">1 Randomized experiments</span> <a href="randomization-inference.html">Randomization inference</a> <a href="neyman.html">Neyman and blocking</a></span>
+    <span class="nav-part"><span class="nav-part-name">2 Observational studies</span> <a href="controls.html">Regression and controls</a></span>
+    <span class="nav-part"><span class="nav-part-name">3 Noncompliance</span> <a href="iv.html">Instrumental variables</a> <a href="principal-strata.html">Principal strata</a></span>
+    <span class="nav-part"><span class="nav-part-name">4 Regression discontinuity</span> <a href="rd.html">Sharp design</a></span>
+    <span class="nav-part"><span class="nav-part-name">5 Difference-in-differences</span> <a href="did.html" aria-current="page">Parallel trends</a> <a href="staggered.html">Staggered adoption</a> <a href="event-study.html">Event study</a></span>
+    <span class="nav-part"><span class="nav-part-name">6 Prediction and decisions</span> <a href="selective-labels.html">Selective labels</a> <a href="uplift.html">Uplift targeting</a></span>
+  </nav>
+</div></header>
+
+<main id="main">
+<p class="kicker">5.1 Difference-in-differences</p>
+<h1>Difference-in-differences: what breaks when parallel trends fails</h1>
+<p class="lede">Difference-in-differences compares the change in an outcome for a group that gets a policy with the change for a group that does not get it. This page shows the main assumption behind the method. It also shows what happens to the estimate when this assumption is false.</p>
+
+<section class="prose" aria-labelledby="brief">
+<h2 id="brief">In brief</h2>
+<p>A chain of stores starts a new policy in some of its stores in period 6. These stores are the treated group, and the other stores are the comparison group. We observe an average outcome, for example weekly sales, in both groups in periods 1 to 10.</p>
+<ul>
+<li>The <strong>difference-in-differences (DiD) estimate</strong> is the change in the treated group minus the change in the comparison group. Each change is the average in periods 6 to 10 minus the average in periods 1 to 5.</li>
+<li>The <strong>average treatment effect on the treated (ATT)</strong> is the average effect of the policy on the treated stores after the start. The simulation knows the ATT, so the readouts show it as the true effect. Under the assumptions in the explanation, the DiD estimate estimates the ATT.</li>
+<li><strong>Estimate minus true effect</strong> shows how far the DiD estimate misses the ATT in the current sample.</li>
+<li>The <strong>estimated extra growth per period</strong> uses periods 1 to 5, before the start. It estimates how much faster the treated group grows than the comparison group in each period.</li>
+</ul>
+<p>Move the sliders and watch these numbers. The explanation below the simulation gives the reasons.</p>
+</section>
+
+<section aria-labelledby="try">
+<h2 id="try">Try it</h2>
+<p class="prose">The simulation has 50 stores in each group. Without the policy and apart from random noise, both groups have the same changes from one period to the next. Two sliders break this: the extra-growth slider and the other-change slider.</p>
+<details class="symbols" id="did-sim-details">
+<summary>How the simulation makes the data</summary>
+<p>Each store has its own level of the outcome. The outcome of each store also moves up and down at random from period to period. This random part is the noise.</p>
+<p>The simulation also keeps the outcome that each treated store would have had without the policy. So it can show the true effect.</p>
+</details>
+<div class="sim">
+<div class="sim-grid">
+<form id="did-controls" class="controls" aria-label="Simulation settings">
+  <div class="control">
+    <label for="did-effect">True effect of the policy <output for="did-effect"></output></label>
+    <input type="range" id="did-effect" name="effect" min="-3" max="3" step="0.1" value="2">
+  </div>
+  <div class="control">
+    <label for="did-trend">Extra growth per period in the treated group <output for="did-trend"></output></label>
+    <input type="range" id="did-trend" name="trendGap" min="-0.5" max="0.5" step="0.05" value="0">
+    <p class="hint">Without the policy, the treated group grows faster or slower than the comparison group in every period.</p>
+  </div>
+  <div class="control">
+    <label for="did-shock">Other change in the treated group at the start <output for="did-shock"></output></label>
+    <input type="range" id="did-shock" name="shock" min="-3" max="3" step="0.1" value="0">
+    <p class="hint">Something else changes the outcome of the treated group from period 6 on, at the same time as the policy.</p>
+  </div>
+  <div class="control">
+    <label for="did-noise">Noise (standard deviation) <output for="did-noise"></output></label>
+    <input type="range" id="did-noise" name="noise" min="0" max="3" step="0.1" value="1">
+  </div>
+  <div class="button-row">
+    <button type="button" id="did-new">Draw a new sample</button>
+    <button type="reset">Reset</button>
+    <span class="sample-label" id="did-sample"></span>
+  </div>
+</form>
+<figure class="chart">
+  <ul class="legend" id="did-legend"></ul>
+  <svg id="did-chart"></svg>
+  <figcaption>The shaded area marks the periods with the policy. Dots show group averages. Hover over a dot to see its value. The dotted gray line is the comparison group line, shifted up or down. The shift equals the average gap between the two groups in periods 1 to 5.</figcaption>
+</figure>
+</div>
+
+<div class="results-wrap">
+<table class="results">
+  <caption>The difference-in-differences calculation</caption>
+  <thead><tr><th scope="col">Group</th><th scope="col">Before (periods 1 to 5)</th><th scope="col">After (periods 6 to 10)</th><th scope="col">Change</th></tr></thead>
+  <tbody>
+    <tr><td><span class="swatch s1"></span>Treated group</td><td id="did-tb"></td><td id="did-ta"></td><td id="did-tc"></td></tr>
+    <tr><td><span class="swatch s2"></span>Comparison group</td><td id="did-cb"></td><td id="did-ca"></td><td id="did-cc"></td></tr>
+    <tr class="key"><td>Difference-in-differences</td><td></td><td></td><td id="did-est"></td></tr>
+    <tr><td><span class="swatch s1"></span>Treated group without the policy (true, simulation only)</td><td id="did-nb"></td><td id="did-na"></td><td id="did-nc"></td></tr>
+  </tbody>
+</table>
+<p class="hint">The table rounds each number to two decimals. So a difference of two printed numbers can be off by 0.01.</p>
+</div>
+<dl class="readout">
+  <div><dt>DiD estimate</dt><dd id="did-r-est"></dd></div>
+  <div><dt>95% confidence interval</dt><dd id="did-r-ci"></dd></div>
+  <div><dt>True effect (ATT)</dt><dd id="did-r-att"></dd></div>
+  <div><dt>Estimate minus true effect</dt><dd id="did-r-bias"></dd></div>
+  <div><dt>Estimated extra growth per period (periods 1 to 5)</dt><dd id="did-r-pre"></dd></div>
+</dl>
+<p class="hint">For the 95% confidence interval, the page first turns each store into one number: its average after the start minus its average before the start. Second, it compares these numbers between the two groups, as for any difference between two means. The first step matters because the outcomes of one store are correlated from period to period. A standard error that treats every store-period as a new, independent observation is then too small. Averaging each store into one before period and one after period is one of the fixes that Cunningham (2021, ch. 9) describes. The 95% confidence interval and other terms are defined in the <a href="index.html#terms">key terms</a> on the home page.</p>
+</div>
+<noscript><p class="noscript">The simulation needs JavaScript. The text on this page still explains the method.</p></noscript>
+</section>
+
+<aside class="notice" aria-labelledby="notice">
+<h2 id="notice">What to notice</h2>
+<ul>
+  <li>Keep the extra-growth slider and the other-change slider at 0. The estimate stays close to the true effect. Draw new samples. The estimate moves a little by chance, and the confidence interval usually contains the true effect.</li>
+  <li>Move the extra-growth slider to 0.5. Before the start date, the treated line now rises faster than the comparison line, and the estimated extra growth per period moves to about 0.5. The estimate now misses the true effect by about 2.5, which is five times the slider value. The reason is timing. The average after period comes five periods later than the average before period, and the extra growth adds up over those periods. New samples do not remove this miss, so it is bias, and the confidence interval no longer contains the true effect.</li>
+  <li>Set the extra-growth slider back to 0, and move the other-change slider to 2. The lines stay parallel before the start date, and the estimated extra growth per period stays near 0. The estimate still misses the true effect by about 2, the full size of the other change. A check of the trends before the start cannot find this problem. The 95% confidence interval keeps the same width, but it no longer contains the true effect: the interval reflects only the noise of single stores. The other change hits the whole treated group when the policy starts, so with one treated group no standard error can tell the two apart.</li>
+  <li>Keep the other change at 2 and look at periods 6 to 10. The dashed blue line lies below the treated line by the true effect, and the dotted gray line lies lower still. The average gap between the dashed line and the dotted line equals the estimate minus the true effect. Real data show the dotted line, because DiD builds it from observed averages. Real data never show the dashed line. So the case for parallel trends must come from knowledge of the setting, not only from the data.</li>
+</ul>
+</aside>
+
+<section class="prose" aria-labelledby="idea">
+<h2 id="idea">The idea</h2>
+<p>A chain of stores starts a new policy in some of its stores in period 6. The other stores do not start the policy. We call the first set of stores the treated group and the second set the comparison group. We observe an average outcome, for example weekly sales, in both groups in periods 1 to 10.</p>
+<p>To measure the effect, we need a number that nobody observes: the average outcome of the treated group after the start, without the policy. There are three common ways to fill in this number. Each way needs its own assumption (Cunningham 2021, ch. 9).</p>
+<ol>
+  <li>Use the comparison group after the start. This assumes that, without the policy, both groups would have the same average outcome.</li>
+  <li>Use the treated group before the start. This assumes that, without the policy, the outcome of the treated group would not change over time. A before-and-after comparison mixes the effect of the policy with everything else that changed over the same time. For example, the season or prices in the whole market may have changed.</li>
+  <li>Use the treated group before the start, plus the change in the comparison group. This is difference-in-differences.</li>
+</ol>
+<p>Difference-in-differences (DiD) uses the comparison group to remove the second thing (Angrist and Pischke 2009, ch. 5; Cunningham 2021, ch. 9; Huntington-Klein 2025, ch. 18). It subtracts the change in the comparison group from the change in the treated group. Some textbooks write DD or DID for the same method.</p>
+<p class="formula">\[\begin{aligned} \text{DiD} = {} & (\text{treated after} - \text{treated before}) \\ & - (\text{comparison after} - \text{comparison before}) \end{aligned}\]</p>
+<p>The change in the comparison group stands in for the change that the treated group would have had without the policy. This step is correct only under the <strong>parallel trends assumption</strong>. This assumption is about the treated group without the policy. Its average outcome would have changed by the same amount as the average outcome of the comparison group.</p>
+<p>In symbols, write \(Y(1)\) for the outcome with the policy and \(Y(0)\) for the outcome without the policy. \(E[\,\cdot\,]\) is an expected value, that is, an average over the population of stores. A vertical bar means among: \(E[Y(0) \mid \text{treated}]\) is the average of \(Y(0)\) among the treated stores. Parallel trends says:</p>
+<p class="formula">\[\begin{aligned} & E[Y_{\text{after}}(0) - Y_{\text{before}}(0) \mid \text{treated}] \\ = {} & E[Y_{\text{after}}(0) - Y_{\text{before}}(0) \mid \text{comparison}] \end{aligned}\]</p>
+<p>The two groups do not need the same level of the outcome. Only the changes over time without the policy must match.</p>
+<p>Parallel trends depends on how the outcome is measured. On this page, the treated stores start at a higher level. If both groups would gain the same amount of sales, the treated stores would gain a smaller percentage. Then the trends are parallel in sales but not in percentages or in logarithms. So a study must explain why the assumption holds on the scale that it uses (Cunningham 2021, ch. 9).</p>
+<p>The policy must also leave the comparison group unaffected. Suppose that the policy also changes sales in the comparison stores. Then their change no longer shows what would have happened without the policy (Huntington-Klein 2025, ch. 18).</p>
+<p>Suppose that parallel trends holds and that the policy has no effect before it starts (no anticipation). Then DiD estimates the average effect of the policy on the stores that got it, in the periods after the start. This quantity is the <strong>average treatment effect on the treated (ATT)</strong>. DiD says nothing about the effect that the policy would have on the comparison group (Huntington-Klein 2025, ch. 18).</p>
+<p>Assume parallel trends, no anticipation, and no spillovers. Then, in symbols, the DiD calculation equals the ATT:</p>
+<p class="formula">\[\text{ATT} = E[Y_{\text{after}}(1) - Y_{\text{after}}(0) \mid \text{treated}]\]</p>
+<p>In general, DiD equals the ATT plus a bias term. The bias term is the change in \(Y(0)\) for the treated group minus the change in \(Y(0)\) for the comparison group. Under parallel trends, this term is zero (Cunningham 2021, ch. 9).</p>
+<p>Parallel trends is an assumption about outcomes that nobody observes: the outcomes of the treated group after the start date without the policy. So the data cannot test it directly. Parallel lines before the start date make the assumption more believable. They do not prove it (Cunningham 2021, ch. 9).</p>
+<p>Lines that move apart before the start date do not prove that the assumption fails, either. The gap could stop growing at the start date for reasons other than the policy. Then parallel trends would still hold (Huntington-Klein 2025, ch. 18).</p>
+<p>An example comes from a study of the minimum wage (Card and Krueger 1994). On April 1, 1992, the minimum wage in New Jersey rose from $4.25 to $5.05 per hour. The minimum wage in Pennsylvania did not change. The authors measured employment at fast-food restaurants in New Jersey and in eastern Pennsylvania before and after the rise. The Pennsylvania restaurants were the comparison group.</p>
+<details class="symbols" id="did-twfe-details">
+<summary>DiD as a regression: two-way fixed effects</summary>
+<p>Many studies compute DiD with a regression instead of a table. The regression has a separate intercept for each store and a separate intercept for each period. It also has a policy indicator that is 1 for treated stores from period 6 on. This regression is called two-way fixed effects (TWFE).</p>
+<p>On this page, the TWFE coefficient on the policy indicator equals the DiD number in the table. The reason is that all treated stores start in the same period and every store is observed in every period. When groups start the policy in different periods, TWFE can mislead. Module 5.2 shows why.</p>
+</details>
+</section>
+
+<section class="refs prose" aria-labelledby="refs">
+<h2 id="refs">References</h2>
+<ol id="did-refs">
+  <li>Angrist, J. D., &amp; Pischke, J.-S. (2009). <cite>Mostly harmless econometrics: An empiricist&apos;s companion</cite>. Princeton University Press. Chapter 5, section 5.2, Differences-in-Differences. <a href="https://doi.org/10.1515/9781400829828">https://doi.org/10.1515/9781400829828</a></li>
+  <li>Card, D., &amp; Krueger, A. B. (1994). Minimum wages and employment: A case study of the fast-food industry in New Jersey and Pennsylvania. <cite>American Economic Review, 84</cite>(4), 772-793. <a href="https://www.jstor.org/stable/2118030">https://www.jstor.org/stable/2118030</a></li>
+  <li>Cunningham, S. (2021). <cite>Causal inference: The mixtape</cite>. Yale University Press. Chapter 9, Difference-in-Differences. <a href="https://doi.org/10.2307/j.ctv1c29t27">https://doi.org/10.2307/j.ctv1c29t27</a>. Free online first edition: <a href="https://mixtape-1ed.netlify.app/09-difference_in_differences.html">chapter 9</a>.</li>
+  <li>Huntington-Klein, N. (2025). <cite>The effect: An introduction to research design and causality</cite> (2nd ed.). Chapman &amp; Hall. Chapter 18, Difference-in-Differences. Free online edition: <a href="https://theeffectbook.net/ch-DifferenceinDifference.html">https://theeffectbook.net/ch-DifferenceinDifference.html</a></li>
+</ol>
+</section>
+
+<nav class="pager" aria-label="Module pages">
+  <a href="rd.html">Previous: 4.1 Regression discontinuity</a>
+  <a href="staggered.html">Next: 5.2 Staggered adoption</a>
+</nav>
+</main>
+
+<footer class="site-footer"><div class="inner">
+<p>All data on this site are simulated in your browser.</p>
+<p>Made by <a href="https://j1yoo.github.io/">Jaewon Yoo</a>, National Tsing Hua University. Code: <a href="https://polyformproject.org/licenses/noncommercial/1.0.0">PolyForm Noncommercial 1.0.0</a>. Text: <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/">Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 (CC BY-NC-ND 4.0)</a>.</p>
+</div></footer>
+<script src="assets/js/core/analytics.js"></script>
+<script src="assets/vendor/katex/katex.min.js"></script>
+<script src="assets/vendor/katex/auto-render.min.js"></script>
+<script src="assets/js/core/math.js"></script>
+<script src="assets/js/core/rng.js"></script>
+<script src="assets/js/core/stats.js"></script>
+<script src="assets/js/core/plot.js"></script>
+<script src="assets/js/core/ui.js"></script>
+<script src="assets/js/sims/did.js"></script>
+<script src="assets/js/pages/did-page.js"></script>
+</body>
+</html>

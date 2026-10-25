@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Selective labels | Causal Playground</title>
+<meta name="description" content="Interactive simulation: why a prediction model can look better than it is when we evaluate it on outcomes that past release decisions selected, and what contraction can measure.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/vendor/katex/katex.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+  /* Page-only styles: bold judge numbers on the chart (the shared halo class keeps them readable over the lines). */
+  svg .judge-label { font-weight: 600; }
+  #sel-judges td:first-child { white-space: nowrap; }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><div class="inner">
+  <a class="site-title" href="index.html">Causal Playground</a>
+  <nav class="site-nav" aria-label="Modules">
+    <span class="nav-part"><span class="nav-part-name">1 Randomized experiments</span> <a href="randomization-inference.html">Randomization inference</a> <a href="neyman.html">Neyman and blocking</a></span>
+    <span class="nav-part"><span class="nav-part-name">2 Observational studies</span> <a href="controls.html">Regression and controls</a></span>
+    <span class="nav-part"><span class="nav-part-name">3 Noncompliance</span> <a href="iv.html">Instrumental variables</a> <a href="principal-strata.html">Principal strata</a></span>
+    <span class="nav-part"><span class="nav-part-name">4 Regression discontinuity</span> <a href="rd.html">Sharp design</a></span>
+    <span class="nav-part"><span class="nav-part-name">5 Difference-in-differences</span> <a href="did.html">Parallel trends</a> <a href="staggered.html">Staggered adoption</a> <a href="event-study.html">Event study</a></span>
+    <span class="nav-part"><span class="nav-part-name">6 Prediction and decisions</span> <a href="selective-labels.html" aria-current="page">Selective labels</a> <a href="uplift.html">Uplift targeting</a></span>
+  </nav>
+</div></header>
+
+<main id="main">
+<p class="kicker">6.1 Prediction and decisions</p>
+<h1>Selective labels: evaluating a prediction model on data from past decisions</h1>
+<p class="lede">Past decisions choose which outcomes a prediction model can learn from. This page shows how a simple evaluation can then make the model look better than it is. It also shows contraction, a method that uses only observed outcomes.</p>
+
+<section class="prose" aria-labelledby="brief">
+<h2 id="brief">In brief</h2>
+<p>Before a trial, a judge decides whether to release a defendant or to detain the defendant in jail. A released defendant can fail to appear in court, and we call this failure to appear (FTA). A model predicts the risk of FTA from the recorded features of a case, but the data show FTA only for released defendants. In court, judges can also notice things that the data do not record, which we call judge-only information.</p>
+<ul>
+<li>The <strong>release rate</strong> is the share of defendants released.</li>
+<li>The <strong>failure rate</strong> is the number of defendants who fail to appear, divided by all defendants, released or detained.</li>
+<li>A <strong>model rule</strong> releases a chosen share of the defendants: those with the lowest predicted risk. Its <strong>naive evaluation</strong> fills in each missing outcome with the predicted risk.</li>
+<li>The <strong>contraction estimate</strong> is the failure rate of the contraction rule. This rule lets the model detain more of the defendants whom the most lenient judge released. So the estimate uses only observed outcomes.</li>
+<li>Only the simulation knows the <strong>true failure rate</strong> of the model rule.</li>
+</ul>
+<p>Move the sliders and watch these numbers. The explanation below the simulation gives the reasons.</p>
+</section>
+
+<section aria-labelledby="try">
+<h2 id="try">Try it</h2>
+<p class="prose">The simulation has 12,000 defendants and 5 judges. Each judge hears 2,400 cases, and the simulation assigns the cases to judges at random. The sliders set how strongly the judge-only information predicts FTA, how much judges use it, the noise in their decisions, and two release rates.</p>
+<details class="symbols" id="sel-sim-details">
+<summary>How the simulation makes the data</summary>
+<p>Each defendant has one recorded feature, x, and one piece of judge-only information, z. The risk of FTA if released rises with x. It also rises with z when the first slider is above 0. The simulation draws the outcome if released for every defendant. Real data show this outcome only for released defendants.</p>
+<p>Each judge ranks the cases by risk as the judge sees it: x, plus z times the second slider, plus random noise. The third slider sets the size of the noise. The judge releases a fixed share of the cases, those with the lowest values. Judge 1 is the strictest and releases 55%. Judge 5 is the most lenient, and the fourth slider sets this rate. The other judges are evenly spaced between them.</p>
+<p>The model is a logistic regression of FTA on x, fit on released defendants only. A logistic regression predicts the probability of a yes-or-no outcome. The model rule releases the chosen share of all 12,000 defendants with the lowest predicted risk.</p>
+</details>
+<div class="sim">
+<div class="sim-grid">
+<form id="sel-controls" class="controls" aria-label="Simulation settings">
+  <div class="control">
+    <label for="sel-bz">How strongly the judge-only information predicts FTA <output for="sel-bz"></output></label>
+    <input type="range" id="sel-bz" name="bZ" min="0" max="2" step="0.1" value="1">
+    <p class="hint">At 0, the judge-only information has no link to FTA.</p>
+  </div>
+  <div class="control">
+    <label for="sel-wz">How much judges use that information <output for="sel-wz"></output></label>
+    <input type="range" id="sel-wz" name="wZ" min="0" max="2" step="0.1" value="1">
+    <p class="hint">At 0, judges ignore it.</p>
+  </div>
+  <div class="control">
+    <label for="sel-noise">Noise in judges' decisions <output for="sel-noise"></output></label>
+    <input type="range" id="sel-noise" name="judgeNoise" min="0" max="2" step="0.1" value="1">
+    <p class="hint">Standard deviation of the random noise in how judges rank defendants.</p>
+  </div>
+  <div class="control">
+    <label for="sel-lenient">Release rate of the most lenient judge <output for="sel-lenient"></output></label>
+    <input type="range" id="sel-lenient" name="lenient" min="0.7" max="0.95" step="0.01" value="0.9" data-format="pct">
+    <p class="hint">Judge 1 releases 55%. The other judges are evenly spaced up to this rate.</p>
+  </div>
+  <div class="control">
+    <label for="sel-rate">Release rate for the readouts <output for="sel-rate"></output></label>
+    <input type="range" id="sel-rate" name="evalRate" min="0.5" max="1" step="0.01" value="0.85" data-format="pct">
+    <p class="hint">We call this the readout rate. The vertical line on the chart marks it. The readouts below the table use it.</p>
+  </div>
+  <div class="button-row">
+    <button type="button" id="sel-new">Draw a new sample</button>
+    <button type="reset">Reset</button>
+    <span class="sample-label" id="sel-sample"></span>
+  </div>
+</form>
+<figure class="chart">
+  <ul class="legend" id="sel-legend"></ul>
+  <svg id="sel-chart"></svg>
+  <figcaption>The failure rate is the number of defendants who fail to appear, divided by all 12,000 defendants, or by the 2,400 defendants of one judge. The lines show the failure rate at each release rate from 50% to 100%. The contraction line stops at the release rate of the most lenient judge. Gray circles show the judges, numbered from 1 (strictest) to 5 (most lenient), and the contraction dots sit at the release rates of the judges. The vertical line marks the readout rate. Hover over a circle or a dot to see its values.</figcaption>
+</figure>
+</div>
+
+<div class="results-wrap">
+<table class="results">
+  <caption>Judges and rules at the same release rates</caption>
+  <thead><tr><th scope="col">Judge</th><th scope="col">Release rate</th><th scope="col">Failure rate of the judge</th><th scope="col"><span class="swatch s3"></span>Contraction estimate</th><th scope="col"><span class="swatch s2"></span>Model rule, naive evaluation</th><th scope="col"><span class="swatch s1"></span>Model rule, true failure rate (simulation only)</th></tr></thead>
+  <tbody id="sel-judges"></tbody>
+</table>
+</div>
+
+<h3>The model rule at a release rate of <span id="sel-rate-1"></span></h3>
+<dl class="readout">
+  <div><dt><span class="swatch s2"></span>Naive evaluation</dt><dd id="sel-r-naive"></dd></div>
+  <div><dt><span class="swatch s1"></span>True failure rate (simulation only)</dt><dd id="sel-r-true"></dd></div>
+  <div><dt>Naive minus true, in percentage points</dt><dd id="sel-r-gap"></dd></div>
+</dl>
+<h3>Contraction on the cases of the most lenient judge</h3>
+<p class="readout-note" id="sel-c-note"></p>
+<dl class="readout">
+  <div><dt><span class="swatch s3"></span>Contraction estimate</dt><dd id="sel-r-c"></dd></div>
+  <div><dt>True failure rate of the contraction rule</dt><dd id="sel-r-ctrue"></dd></div>
+  <div><dt>Extra detentions by the model, of 2,400 cases</dt><dd id="sel-r-extra"></dd></div>
+</dl>
+<h3>Defendants whom the judges detained</h3>
+<dl class="readout">
+  <div><dt>Number detained, of 12,000</dt><dd id="sel-r-ndet"></dd></div>
+  <div><dt>Average risk of FTA predicted by the model</dt><dd id="sel-r-dpred"></dd></div>
+  <div><dt>Average true risk of FTA (simulation only)</dt><dd id="sel-r-dtrue"></dd></div>
+</dl>
+<h3>Three kinds of defendants: the strictest and the most lenient judge (simulation only)</h3>
+<p class="readout-note">The strictest judge releases <span id="sel-st-strict"></span> of defendants. The most lenient judge releases <span id="sel-st-lenient"></span>. Both judges rank defendants by the risk that they see, so the simulation knows what each judge would decide for every defendant.</p>
+<div class="results-wrap">
+<table class="results">
+  <thead><tr><th scope="col">Group</th><th scope="col">Share of defendants</th><th scope="col">True average risk of FTA if released</th></tr></thead>
+  <tbody>
+    <tr><td>Released by both judges</td><td id="sel-st-a-share"></td><td id="sel-st-a-risk"></td></tr>
+    <tr><td>Released only by the most lenient judge</td><td id="sel-st-b-share"></td><td id="sel-st-b-risk"></td></tr>
+    <tr><td>Detained by both judges</td><td id="sel-st-c-share"></td><td id="sel-st-c-risk"></td></tr>
+  </tbody>
+</table>
+</div>
+</div>
+<noscript><p class="noscript">The simulation needs JavaScript. The text on this page still explains the method.</p></noscript>
+</section>
+
+<aside class="notice" aria-labelledby="notice">
+<h2 id="notice">What to notice</h2>
+<ul>
+  <li>With the default settings, the solid naive line lies below the dashed true line at every release rate. At 85%, the naive evaluation is about 3 percentage points too low. Set how strongly the judge-only information predicts FTA to 0. The naive line moves close to the dashed line, and naive minus true is now within 1 percentage point of 0. Set that slider back to 1, and set how much judges use that information to 0: the two lines come close again. So the naive evaluation is too low only when the judge-only information both predicts FTA and drives the decisions of the judges.</li>
+  <li>Return to the default settings and press Draw a new sample several times. Naive minus true stays near &minus;3 percentage points in every sample. New samples do not remove the gap, so it is bias, not chance.</li>
+  <li>Look at the readouts for the defendants whom the judges detained. With the default settings, the model predicts an average FTA risk of about 25% for them. Their true average risk is about 44%. The judges detained many of them because of judge-only information, which the model does not see. Set either of the first two sliders to 0. The two numbers then differ by less than 4 percentage points.</li>
+  <li>The contraction line ends at the release rate of the most lenient judge. Move the slider for that release rate, and the end of the line moves with it. At the rate of that judge, the contraction dot sits inside the circle of the judge. At the readout rate, the contraction estimate equals the true failure rate of the contraction rule, because contraction uses only observed outcomes. Move the readout rate above the rate of the most lenient judge. Contraction then gives no estimate.</li>
+  <li>Compare the circle of each judge with the contraction dot at the same release rate. Set how strongly the judge-only information predicts FTA to 0: in most samples, the contraction dots are below the circles of judges 1 to 3. So at the same release rate, the contraction rule has a lower failure rate than these judges. Set that slider to 2: in most samples, the contraction dots are now above the same circles. These judges use judge-only information that strongly predicts FTA, so they do better than the contraction rule. The dashed true line moves in the same way: it is below these circles at 0 and above them at 2.</li>
+</ul>
+</aside>
+
+<section class="prose" aria-labelledby="idea">
+<h2 id="idea">The idea</h2>
+<p>Before a trial, a judge decides whether to release a defendant or to detain the defendant in jail until the trial. A released defendant can fail to appear in court. We call this failure to appear (FTA). Kleinberg et al. (2018) study these decisions with pretrial release data from New York City. Their main outcome is FTA. For convenience, the paper calls this outcome crime.</p>
+<p>A prediction model uses the recorded features of a case, for example the current charge and the prior record, to predict the risk of FTA. To train and test the model, we need cases with a known outcome. We call the known outcome a label.</p>
+<p>A detained defendant cannot fail to appear, so nobody sees what that defendant would have done after release. The data have labels only for the defendants whom the judges released. Lakkaraju et al. (2017) call this the <strong>selective labels problem</strong>. It is a form of <a href="index.html#terms">selection bias</a>: the decisions under study choose which outcomes we observe (Barocas et al. 2023).</p>
+<p>A judge or a model decides whom to release. We describe each set of decisions with two numbers. The <strong>release rate</strong> is the share of defendants released. The <strong>failure rate</strong> is the number of defendants who fail to appear, divided by all defendants, released or detained (Lakkaraju et al. 2017). A detained defendant counts as no FTA. With this denominator, we can compare decisions with different release rates.</p>
+<p>In symbols, write \(x\) for the recorded features and \(z\) for the judge-only information. Write \(D = 1\) if the judge released the defendant and \(D = 0\) if the judge detained the defendant. Write \(Y(1)\) for FTA if released (1 for FTA, 0 otherwise). A rule releases a set \(S\) of the \(N\) defendants. Its failure rate is:</p>
+<p class="formula">\[\text{failure rate} = \frac{1}{N} \sum_{i \in S} Y_i(1)\]</p>
+<p>A <strong>model rule</strong> releases a chosen share of the defendants: those with the lowest predicted risk. To compute its failure rate, we need the outcome of every defendant that it releases. The judges detained some of these defendants, so their outcomes are missing. A simple approach fills in each missing outcome with the predicted risk from the model. The model learned this prediction from released defendants with the same recorded features. We call this approach the <strong>naive evaluation</strong>.</p>
+<p>In symbols, let \(m(x)\) be the predicted risk from a model fit on released defendants. The naive evaluation uses \(m(x)\) in place of \(Y(1)\) for the defendants whom the judges detained:</p>
+<p class="formula">\[\begin{aligned} \text{naive evaluation} = \frac{1}{N} \Bigl[ & \sum_{i \in S,\, D_i = 1} Y_i(1) \\ & + \sum_{i \in S,\, D_i = 0} m(x_i) \Bigr] \end{aligned}\]</p>
+<p>Judges see the defendant in court. They can notice things that the data do not record. The example in Kleinberg et al. (2018) is a gang tattoo. We call such information <strong>judge-only information</strong>.</p>
+<p>Suppose that judge-only information predicts FTA, and that judges detain defendants partly because this information signals a high risk. Then the detained defendants have a higher risk than released defendants with the same recorded features. The filled-in outcomes are too low, and the naive evaluation makes the model look better than it is. More adjustment for the recorded features does not remove this error. The error comes from information that the data do not record.</p>
+<details class="symbols" id="sel-imputation-symbols">
+<summary>The imputation error in symbols</summary>
+<p>Kleinberg et al. (2018) use a model in which the risk is \(x + z\). In this model, \(x\) is the part of the risk that the recorded features predict. The rest of the risk, \(z\), is the part that only the judge sees. Suppose that we fill in the risk of a detained defendant with the average risk of released defendants who have the same \(x\). The filled-in value minus the true average risk is the imputation error:</p>
+<p class="formula">\[\begin{aligned} \text{imputation error} = {} & E[z \mid \text{released}, x] \\ & - E[z \mid \text{detained}, x] \end{aligned}\]</p>
+<p>Suppose that judges select on \(z\). That is, among defendants with the same \(x\), judges are more likely to detain those with a higher \(z\). Then the detained defendants have a higher average \(z\) than the released defendants with the same \(x\). So this error is below zero, and the filled-in risk is too low.</p>
+<p>In the simulation, the risk rises with the judge-only information only when the first slider is above 0. At 0, the part of the risk that only the judge sees is zero for every defendant. Judges can still use the judge-only information, but the imputation error is then zero.</p>
+</details>
+<p>So the naive evaluation rests on an assumption: among defendants with the same recorded features, released and detained defendants have the same average risk. This is the assumption of no unmeasured confounding, also called selection on observables. Judge-only information that predicts FTA and drives decisions breaks it (Kleinberg et al. 2018).</p>
+<p>The problem is one-sided (Kleinberg et al. 2018). Suppose that a rule detains a defendant whom the judge released. We observed the outcome of that defendant, so we can compute the new failure rate. Suppose instead that a rule releases a defendant whom the judge detained. Then nobody observed the outcome.</p>
+<p><strong>Contraction</strong> uses the side that we can measure (Lakkaraju et al. 2017). The <strong>leniency</strong> of a judge is the release rate of that judge. Take the most lenient judge. Start from the defendants whom this judge released. The model detains more of them, highest predicted risk first, until the release rate falls to a target rate. Everyone whom the judge detained stays detained.</p>
+<details class="symbols" id="sel-contraction-symbols">
+<summary>Contraction in symbols</summary>
+<p>Contraction (Lakkaraju et al. 2017): let \(q\) be the most lenient judge, and \(C_q\) the cases of judge \(q\). Let \(R_q\) be the cases that judge \(q\) released. Take a target rate \(r\) at or below \(|R_q| / |C_q|\). Detain the cases in \(R_q\) with the highest \(m(x)\). The number of these extra detentions is:</p>
+<p class="formula">\[\begin{aligned} \text{extra detentions} = {} & (1 - r)|C_q| \\ & - (|C_q| - |R_q|) \end{aligned}\]</p>
+<p>The estimate is the number of defendants in the rest of \(R_q\) who fail to appear, divided by \(|C_q|\). Lakkaraju et al. (2017) write \(D_q\) for the cases of judge \(q\). This page uses \(C_q\), because \(D\) is the treatment indicator on this site.</p>
+</details>
+<p>We call the result the <strong>contraction rule</strong>. The judge released every defendant whom the contraction rule releases, so we observe all of their outcomes. No outcome needs to be filled in. Then we compare the failure rate of the contraction rule with the failure rate of a stricter judge who has the same release rate. Kleinberg et al. (2018) apply the same idea to groups of judges sorted by leniency.</p>
+<p>Contraction needs three things: many judges, cases assigned to judges as good as at random, and judges who differ in leniency. As good as random means that each judge hears a comparable set of cases. In real courts, assignment is as good as random only within cells. A cell is a group of cases, for example the cases heard in the same borough, year, month, and day of the week. Kleinberg et al. (2018) check this with balance tests: they test whether the predicted risk of defendants differs between more and less lenient judges. Contraction does not assume that judges ignore judge-only information.</p>
+<p>Contraction also has limits. It can evaluate only release rates at or below the release rate of the most lenient judge. It never releases a defendant whom that judge detained. So it evaluates the contraction rule, not a model rule that ranks all defendants.</p>
+<p>Accuracy on the labeled cases does not answer the question either. A common accuracy measure is the area under the receiver operating characteristic curve (AUC). Take a randomly chosen case with the outcome and a randomly chosen case without the outcome. The AUC is the probability that the first case has the higher predicted risk. A high AUC on the labeled cases does not show that the model makes better release decisions than the judges (Kleinberg et al. 2018).</p>
+<details class="symbols" id="sel-strata-details">
+<summary>Three kinds of defendants: principal strata</summary>
+<p>Module 3.2 explains principal strata with a job training example. The same idea applies to judges. Take a lenient judge and a strict judge. Each defendant has two potential decisions, one from each judge. So defendants fall into groups by the pair of decisions: released by both judges, released only by the lenient judge, and detained by both judges.</p>
+<p>A fourth group, released only by the strict judge, cannot exist when both judges rank defendants in the same order. In this simulation they do. Frangakis and Rubin (2002) call groups like these <a href="index.html#terms">principal strata</a>: groups defined by what would happen to each unit under each condition.</p>
+<p>Nobody can see which group a defendant belongs to, because each defendant appears before one judge only. The strict judge releases fewer defendants. The extra defendants that the strict judge detains come from the middle group. Contraction lets the model choose whom to detain from the defendants that the lenient judge released. Then it compares the failure rates of the two choices at the same release rate.</p>
+<p>For a detained defendant, FTA if released is a well-defined outcome that the data do not show. So it is missing. A wage for a person without a job is different: it does not exist.</p>
+</details>
+</section>
+
+<section class="refs prose" aria-labelledby="refs">
+<h2 id="refs">References</h2>
+<ol id="sel-refs">
+  <li>Barocas, S., Hardt, M., &amp; Narayanan, A. (2023). <cite>Fairness and machine learning: Limitations and opportunities</cite>. MIT Press. <a href="https://fairmlbook.org/">https://fairmlbook.org/</a></li>
+  <li>Frangakis, C. E., &amp; Rubin, D. B. (2002). Principal stratification in causal inference. <cite>Biometrics, 58</cite>(1), 21-29. <a href="https://doi.org/10.1111/j.0006-341X.2002.00021.x">https://doi.org/10.1111/j.0006-341X.2002.00021.x</a></li>
+  <li>Kleinberg, J., Lakkaraju, H., Leskovec, J., Ludwig, J., &amp; Mullainathan, S. (2018). Human decisions and machine predictions. <cite>The Quarterly Journal of Economics, 133</cite>(1), 237-293. <a href="https://doi.org/10.1093/qje/qjx032">https://doi.org/10.1093/qje/qjx032</a></li>
+  <li>Lakkaraju, H., Kleinberg, J., Leskovec, J., Ludwig, J., &amp; Mullainathan, S. (2017). The selective labels problem: Evaluating algorithmic predictions in the presence of unobservables. In <cite>Proceedings of the 23rd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining</cite> (pp. 275-284). Association for Computing Machinery. <a href="https://doi.org/10.1145/3097983.3098066">https://doi.org/10.1145/3097983.3098066</a></li>
+</ol>
+</section>
+
+<nav class="pager" aria-label="Module pages">
+  <a href="event-study.html">Previous: 5.3 Event study and placebo dates</a>
+  <a href="uplift.html">Next: 6.2 Uplift targeting</a>
+</nav>
+</main>
+
+<footer class="site-footer"><div class="inner">
+<p>All data on this site are simulated in your browser.</p>
+<p>Made by <a href="https://j1yoo.github.io/">Jaewon Yoo</a>, National Tsing Hua University. Code: <a href="https://polyformproject.org/licenses/noncommercial/1.0.0">PolyForm Noncommercial 1.0.0</a>. Text: <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/">Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 (CC BY-NC-ND 4.0)</a>.</p>
+</div></footer>
+<script src="assets/js/core/analytics.js"></script>
+<script src="assets/vendor/katex/katex.min.js"></script>
+<script src="assets/vendor/katex/auto-render.min.js"></script>
+<script src="assets/js/core/math.js"></script>
+<script src="assets/js/core/rng.js"></script>
+<script src="assets/js/core/stats.js"></script>
+<script src="assets/js/core/plot.js"></script>
+<script src="assets/js/core/ui.js"></script>
+<script src="assets/js/sims/selective.js"></script>
+<script src="assets/js/pages/selective-page.js"></script>
+</body>
+</html>
