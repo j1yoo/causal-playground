@@ -12,7 +12,10 @@
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
 <header class="site-header"><div class="inner">
-  <a class="site-title" href="index.html" aria-current="page">Causal Playground</a>
+  <div class="home-head">
+    <h1 class="home-title">Causal Playground</h1>
+    <p class="byline">A teaching companion for Programming for Business Analytics (PBA) and Experiments and Causal Inference (ECI), by <a href="https://j1yoo.github.io/">Jaewon Yoo</a>.</p>
+  </div>
   <nav class="site-nav" aria-label="Modules">
     <span class="nav-part"><span class="nav-part-name">1 Randomized experiments</span> <a href="randomization-inference.html">Randomization inference</a> <a href="neyman.html">Neyman and blocking</a></span>
     <span class="nav-part"><span class="nav-part-name">2 Observational studies</span> <a href="controls.html">Regression and controls</a></span>
@@ -24,16 +27,15 @@
 </div></header>
 
 <main id="main">
-<h1>Causal Playground</h1>
 <p class="lede">Each module page lets you change one assumption and watch what happens to an estimate. The data are simulated, so every module page knows the true value of what it estimates. You can see when a method recovers the true value and when it does not.</p>
 
 <section class="prose" aria-labelledby="how">
 <h2 id="how">How the pages work</h2>
 <ul>
-  <li>Each module page starts with a short explanation of one method.</li>
+  <li>Each module page starts with <strong>In brief</strong>, a short explanation of one method, and then the simulation.</li>
   <li>In the simulation, move a slider to change one part of the setting. The charts and the numbers update at once.</li>
   <li>Press <strong>Draw a new sample</strong> to see how much an estimate changes by chance. Press <strong>Reset</strong> to return to the starting values and the first sample.</li>
-  <li>Each module page ends with a <strong>What to notice</strong> box and a short list of references.</li>
+  <li>Below the simulation, a <strong>What to notice</strong> box suggests moves to try. The full explanation and a short list of references follow.</li>
   <li>Solid lines show what real data would show. Dashed lines show true values that only a simulation knows. Dotted gray lines show what a method assumes.</li>
 </ul>
 </section>
@@ -55,7 +57,7 @@
 <h3 class="part-title">3. Noncompliance</h3>
 <ol class="module-list">
   <li><a href="iv.html">3.1 Noncompliance and instrumental variables</a>
-    <p>What a randomized swipe ad estimates when few customers swipe to the end. When the Wald estimate recovers the effect for compliers. How a direct effect of the ad, defiers, or a weak instrument change the estimate.</p></li>
+    <p>What a randomized swipe ad estimates when few customers swipe through to the reveal. When the Wald estimate recovers the effect for compliers. How a direct effect of the ad, defiers, or a weak instrument change the estimate.</p></li>
   <li><a href="principal-strata.html">3.2 Principal strata</a>
     <p>Why a comparison among workers can mislead when a training program changes who works, and which comparison is fair.</p></li>
 </ol>

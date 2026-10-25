@@ -63,6 +63,9 @@ a:hover { text-decoration-thickness: 2px; }
 .site-title {
   font-weight: 700; font-size: 1.1rem; color: var(--ink); text-decoration: none;
 }
+/* The home page header shows the title large, with the line naming the courses and the author under it. */
+.home-head { width: 100%; }
+.home-title { font-size: 1.85rem; line-height: 1.25; margin: 14px 0 4px; }
 .site-nav { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 0.92rem; }
 .nav-part { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
 .nav-part-name { font-size: 0.78rem; font-weight: 600; color: var(--ink-2); }
@@ -86,6 +89,7 @@ h2 { font-size: 1.35rem; margin: 36px 0 10px; }
 h3 { font-size: 1.1rem; margin: 24px 0 8px; }
 
 .lede { font-size: 1.08rem; color: var(--ink-2); max-width: 72ch; }
+main > .lede:first-child { margin-top: 22px; }
 
 p, li { max-width: 72ch; }
 
@@ -273,6 +277,7 @@ dl.glossary .src { color: var(--ink-2); font-size: 0.9rem; }
   background: var(--wash); padding: 10px 14px; border-radius: 8px; max-width: 72ch;
 }
 
+.byline { color: var(--ink-2); font-size: 1rem; margin: 0 0 8px; max-width: 72ch; }
 .kicker { font-size: 0.85rem; font-weight: 600; color: var(--ink-2); margin: 26px 0 0; letter-spacing: 0.02em; }
 .formula {
   font-size: 0.98rem; background: var(--surface);

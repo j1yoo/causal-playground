@@ -35,7 +35,7 @@
 
 <section class="prose" aria-labelledby="brief">
 <h2 id="brief">In brief</h2>
-<p>A random half of the customers get a swipe ad that shows the book only on its last frame. The other customers get a standard ad that shows the book at once. A customer completes the swipe ad by swiping to the last frame, and few customers do. This page asks what completion does to spending.</p>
+<p>A random half of the customers get a swipe ad that hides the book until the end: the book appears only after the last frame. The other customers get a standard ad that shows the book at once. A customer completes the swipe ad by swiping through every frame to this reveal, and few customers do. This page asks what completion does to spending.</p>
 <ul>
 <li>The <strong>intention-to-treat (ITT) effect</strong> is the difference in average spending between the two assigned groups.</li>
 <li>The <strong>first stage</strong> is the difference between the two groups in the share who complete.</li>
@@ -60,7 +60,7 @@
   <div class="control">
     <label for="iv-c">Share of compliers <output for="iv-c"></output></label>
     <input type="range" id="iv-c" name="compliers" min="0.02" max="0.7" step="0.01" value="0.5" data-format="pct">
-    <p class="hint">In the study, about 3 in 100 exposures to the swipe ad reached the last frame.</p>
+    <p class="hint">In the study, about 3 in 100 exposures to the swipe ad reached the reveal.</p>
   </div>
   <div class="control">
     <label for="iv-a">Share of always-takers <output for="iv-a"></output></label>
@@ -82,7 +82,7 @@
   <div class="control">
     <label for="iv-h">Direct effect of the swipe ad on customers who stop early (dollars) <output for="iv-h"></output></label>
     <input type="range" id="iv-h" name="direct" min="-10" max="10" step="1" value="0">
-    <p class="hint">They saw the first frames but not the book. At 0, the exclusion restriction holds.</p>
+    <p class="hint">They saw some frames but not the book. At 0, the exclusion restriction holds.</p>
   </div>
   <div class="control">
     <label for="iv-n">Number of customers <output for="iv-n"></output></label>
@@ -184,11 +184,11 @@
 
 <section class="prose" aria-labelledby="idea">
 <h2 id="idea">The idea</h2>
-<p>An online bookstore wants to know whether a new kind of ad sells books. The ad is an <strong>interactive blind lead-in ad</strong>: a swipe ad that shows the book only on its last frame. A customer <strong>completes</strong> the ad by swiping to the last frame.</p>
-<p>A field experiment tested this ad with more than 109,000 customers of a large online bookstore in South Korea (Yoon et al. in press). It assigned each customer at random to the swipe ad or to a standard ad that shows the book at once. Only about 3 in 100 exposures to the swipe ad reached the last frame. On average, assignment to the swipe ad did not raise purchases. An instrumental variables analysis found that completion raised later purchases among the customers whom the swipe ad moved to complete it. This page shows how one experiment can give both results.</p>
+<p>An online bookstore wants to know whether a new kind of ad sells books. The ad is an <strong>interactive blind lead-in ad</strong>: a swipe ad that reveals the book only at the end, after its last frame. The frames themselves do not show the book. A customer <strong>completes</strong> the ad by swiping through every frame to the reveal.</p>
+<p>A field experiment tested this ad with more than 109,000 customers of a large online bookstore in South Korea (Yoon et al. in press). It assigned each customer at random to the swipe ad or to a standard ad that shows the book at once. Only about 3 in 100 exposures to the swipe ad reached the reveal. On average, assignment to the swipe ad did not raise purchases. An instrumental variables analysis found that completion raised later purchases among the customers whom the swipe ad moved to complete it. This page shows how one experiment can give both results.</p>
 <p>The assignment, Z, is random. It is an <strong>instrumental variable</strong>, or instrument, for completion: it is assigned at random, and it changes who completes. Completion, D, is the treatment of interest, and each customer chooses it. A customer who gets the swipe ad and stops early does not take the treatment that the assignment offers. This is called <strong>noncompliance</strong>.</p>
 <p>The outcome, Y, is spending on books in the next 30 days. The study measured purchases. This page simulates spending, so that the numbers are easy to read.</p>
-<p>Each customer has a <strong>compliance type</strong>, defined by the choices that the customer would make with each assignment (Angrist, Imbens, and Rubin 1996). A customer with the standard ad has no last frame to reach. So the experiment has only two types. <strong>Compliers</strong> would complete the swipe ad if they got it. <strong>Never-takers</strong> would not complete it.</p>
+<p>Each customer has a <strong>compliance type</strong>, defined by the choices that the customer would make with each assignment (Angrist, Imbens, and Rubin 1996). A customer with the standard ad has no reveal to reach. So the experiment has only two types. <strong>Compliers</strong> would complete the swipe ad if they got it. <strong>Never-takers</strong> would not complete it.</p>
 <p>This setting is called one-sided noncompliance (Imbens and Rubin 2015, ch. 23). The assignment cannot change a customer's type, so the types are principal strata, as in Module 3.2. The data show the type only for the customers who got the swipe ad.</p>
 <details class="symbols" id="iv-types-symbols">
 <summary>The types in symbols</summary>
@@ -196,7 +196,7 @@
 <p>The types are compliers (\(D(0) = 0, D(1) = 1\)), always-takers (1, 1), never-takers (0, 0), and defiers (1, 0). Their shares are \(\pi_c\), \(\pi_a\), \(\pi_n\), and \(\pi_d\). One-sided noncompliance means \(D(0) = 0\) for every customer, so \(\pi_a = \pi_d = 0\).</p>
 </details>
 <p>Three simple comparisons are common. The <strong>intention-to-treat (ITT) effect</strong> compares the average spending of the two assigned groups. Random assignment makes this comparison unbiased for the effect of the assignment. The ITT effect is not the effect of completion. It averages over compliers and never-takers, so with 3 compliers in 100 customers even a large effect of completion gives a small ITT effect.</p>
-<p>The <strong>as-treated</strong> comparison puts the customers who completed against all customers who did not. The <strong>per-protocol</strong> comparison keeps only the customers who followed their assignment. It compares the customers who completed the swipe ad with the customers who got the standard ad. Both comparisons use groups that the customers formed by their own choices. Customers who swipe to the end may be keen readers who buy more books anyway. So these comparisons bring back the selection bias that random assignment removed (Imbens and Rubin 2015, ch. 23).</p>
+<p>The <strong>as-treated</strong> comparison puts the customers who completed against all customers who did not. The <strong>per-protocol</strong> comparison keeps only the customers who followed their assignment. It compares the customers who completed the swipe ad with the customers who got the standard ad. Both comparisons use groups that the customers formed by their own choices. Customers who swipe through to the reveal may be keen readers who buy more books anyway. So these comparisons bring back the selection bias that random assignment removed (Imbens and Rubin 2015, ch. 23).</p>
 <p>The <strong>Wald estimator</strong> divides the ITT effect on spending by the ITT effect on completion. The second number, the difference in the share who complete, is the <strong>first stage</strong>.</p>
 <p class="formula">\[\begin{aligned} \text{Wald} &= \frac{\text{ITT}_Y}{\text{ITT}_D} \\ &= \frac{E[Y \mid Z = 1] - E[Y \mid Z = 0]}{E[D \mid Z = 1] - E[D \mid Z = 0]} \end{aligned}\]</p>
 <p>The Wald estimator estimates the <strong>local average treatment effect (LATE)</strong>, the average effect of completion for compliers. It does so if these assumptions hold (Angrist, Imbens, and Rubin 1996; Huntington-Klein 2025, ch. 19):</p>
@@ -210,7 +210,7 @@
 <p>Under these assumptions, the ITT effect on spending equals the complier share times the LATE. With one-sided noncompliance, every customer who completed is a complier with the swipe ad. Random assignment makes these customers like all compliers. So the Wald estimator then also estimates the average effect for the customers who completed (Imbens and Rubin 2015, ch. 23).</p>
 <p class="formula">\[\begin{aligned} \text{ITT}_D &= \pi_c, \qquad \text{ITT}_Y = \pi_c \times \text{LATE}, \\ \text{Wald} &= \frac{\pi_c \times \text{LATE}}{\pi_c} = \text{LATE} \end{aligned}\]</p>
 <p>The usual regression method for instrumental variables is two-stage least squares (2SLS). With one random assignment and no other variables, it gives the same number as the Wald estimator. The LATE says nothing about never-takers. The average treatment effect (ATE) for all customers can be different.</p>
-<p>The exclusion restriction needs thought in a design like this one. A never-taker with the swipe ad saw the first frames but not the book. A never-taker with the standard ad saw the book at once. If this difference changes spending, the assignment has a direct effect on spending, and the exclusion restriction fails.</p>
+<p>The exclusion restriction needs thought in a design like this one. A never-taker with the swipe ad saw some frames but not the book. A never-taker with the standard ad saw the book at once. If this difference changes spending, the assignment has a direct effect on spending, and the exclusion restriction fails.</p>
 <p>The Wald estimator then misses the LATE. Without defiers, the error is the direct effect times the share of never-takers, divided by the share of compliers (Angrist, Imbens, and Rubin 1996):</p>
 <p class="formula">\[\text{Wald} - \text{LATE} = h \, \frac{\pi_n}{\pi_c}\]</p>
 <p>Here \(h\) is the direct effect of the swipe ad on the customers who get it and do not complete. With 3 compliers in 100, a direct effect of 1 dollar moves the Wald estimate by about 32 dollars.</p>

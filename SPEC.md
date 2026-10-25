@@ -47,6 +47,8 @@ The one exception is `assets/js/core/analytics.js` (section 8).
 A page has two layers: a short part to play with at the top, and the full explanation below the simulation.
 
 1. Header with site title and the full module nav. Mark the current page with `aria-current="page"`.
+   On the home page only, the header shows the title large, with the line that names the courses and the
+   author under it.
 2. `<p class="kicker">X.Y Part name</p>` (for example `5.2 Difference-in-differences`), `<h1>`,
    `<p class="lede">` (at most 3 sentences).
 3. `In brief` section (`class="prose"`, `<h2 id="brief">`): 100 to 200 words. Two to four sentences on the
@@ -117,7 +119,8 @@ A page test renders every formula with KaTeX and fails on invalid TeX.
 - In What to notice, describe only what the reader can see on the page after the move.
 - Use one term for one thing on the whole page. Define each technical term at first use.
 - Expand every abbreviation at first use, for example two-way fixed effects (TWFE).
-- Do not name a course or a person who teaches it. Do not name a data platform.
+- Do not name a course or a person who teaches it. Do not name a data platform. Two places are the exception:
+  the line under the title of the home page names the two courses and the author, and the footer names the author.
 
 ## 7. Tests
 
