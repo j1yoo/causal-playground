@@ -66,12 +66,12 @@ a:hover { text-decoration-thickness: 2px; }
 /* The home page header shows the title large, with the line naming the courses and the author under it. */
 .home-head { width: 100%; }
 .home-title { font-size: 1.85rem; line-height: 1.25; margin: 14px 0 4px; }
-.site-nav { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 0.92rem; }
+/* One line per part. */
+.site-nav { display: flex; flex-direction: column; gap: 4px; width: 100%; font-size: 0.92rem; }
 .nav-part { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
 .nav-part-name { font-size: 0.78rem; font-weight: 600; color: var(--ink-2); }
 @media (max-width: 560px) {
-  /* One line per part on phones; a long line scrolls sideways. */
-  .site-nav { flex-direction: column; flex-wrap: nowrap; gap: 4px; width: 100%; }
+  /* On phones a long line scrolls sideways. */
   .nav-part { flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; scrollbar-width: none; padding-bottom: 2px; }
 }
 .site-nav a { color: var(--ink-2); text-decoration: none; padding: 2px 0; }

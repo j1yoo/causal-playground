@@ -75,8 +75,10 @@ test('uplift: with a strong negative link, uplift targeting beats risk targeting
 });
 
 test('uplift: risk targeting improves as the link rises from -0.9 to 0 to 0.9', () => {
-  const e = [-0.9, 0, 0.9].map(rho => run({ rho, seed: 3 }));
-  const risk = e.map(x => x.prevented.risk), overlap = e.map(x => x.overlap);
+  // Read the numbers right after each run. When the three results were read at the end, the full suite
+  // failed now and then: the first two results showed the overlap of the third run.
+  const e = [-0.9, 0, 0.9].map(rho => { const x = run({ rho, seed: 3 }); return { risk: x.prevented.risk, overlap: x.overlap }; });
+  const risk = e.map(x => x.risk), overlap = e.map(x => x.overlap);
   assert.ok(risk[0] < risk[1] && risk[1] < risk[2], 'risk targeting ' + risk.join(' '));
   assert.ok(overlap[0] < overlap[1] && overlap[1] < overlap[2], 'overlap ' + overlap.join(' '));
 });
